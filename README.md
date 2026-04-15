@@ -1,102 +1,17 @@
 <%- include('partials/header') %>
-<section class="section">
-  <div class="card">
-    <div class="admin-head">
-      <div>
-        <h1 style="margin:0;color:var(--green);">Pannello Admin</h1>
-        <p class="small">Gestione iscrizioni, sport e impostazioni.</p>
-      </div>
-      <div class="button-group">
-        <a class="button button-green" href="/admin/export/excel">Esporta Excel</a>
-        <form method="post" action="/admin/logout"><button class="button" type="submit">Esci</button></form>
-      </div>
+<div class="login-box card">
+  <h1 style="margin-top:0;color:var(--green);">Accesso Admin</h1>
+  <p class="small">Accedi al pannello amministratore del Palio della Torre.</p>
+  <form method="post" action="/admin/login">
+    <div style="margin-bottom:14px;">
+      <label>Username</label>
+      <input name="username" required />
     </div>
-
-    <div class="admin-grid">
-      <div class="card nested-card">
-        <h3>Impostazioni</h3>
-        <form method="post" action="/admin/settings/update">
-          <label>Iscrizioni aperte</label>
-          <select name="registrations_open">
-            <option value="true" <%= settings.registrations_open==='true'?'selected':'' %>>Sì</option>
-            <option value="false" <%= settings.registrations_open==='false'?'selected':'' %>>No</option>
-          </select>
-          <label>Telefono</label><input name="contact_phone" value="<%= settings.contact_phone || '' %>" />
-          <label>Email</label><input name="contact_email" value="<%= settings.contact_email || '' %>" />
-          <label>Indirizzo</label><input name="contact_address" value="<%= settings.contact_address || '' %>" />
-          <button class="button button-yellow" type="submit">Salva impostazioni</button>
-        </form>
-      </div>
-
-      <div class="card nested-card">
-        <h3>Sport</h3>
-        <p class="small">I costi sono modificabili qui sotto. Per gli sport di coppia puoi indicare il prezzo totale della coppia.</p>
-        <% sports.forEach((sport) => { %>
-          <form method="post" action="/admin/sports/<%= sport.id %>/update" class="sport-row">
-            <input name="name" value="<%= sport.name %>" />
-            <select name="team_type">
-              <option value="single" <%= sport.team_type==='single'?'selected':'' %>>Singolo</option>
-              <option value="pair" <%= sport.team_type==='pair'?'selected':'' %>>Coppia</option>
-            </select>
-            <input type="number" step="0.01" name="price" value="<%= sport.price %>" placeholder="Prezzo" />
-            <span class="small"><%= sport.team_type === 'pair' ? 'Prezzo coppia' : 'Prezzo singolo' %></span>
-            <label class="checkbox inline"><input type="checkbox" name="is_open" <%= sport.is_open ? 'checked' : '' %> /> Aperto</label>
-            <button class="button button-green" type="submit">Aggiorna</button>
-          </form>
-        <% }) %>
-      </div>
+    <div style="margin-bottom:16px;">
+      <label>Password</label>
+      <input type="password" name="password" required />
     </div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="card">
-    <h2 style="margin-top:0;color:var(--green);">Iscrizioni ricevute</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Sport</th>
-            <th>Rione</th>
-            <th>Email</th>
-            <th>1° giocatore</th>
-            <th>2° giocatore</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (!registrations.length) { %>
-            <tr><td colspan="6">Nessuna iscrizione.</td></tr>
-          <% } %>
-          <% registrations.forEach((item) => { %>
-            <tr>
-              <td><%= new Date(item.created_at).toLocaleString('it-IT') %></td>
-              <td><strong><%= item.sport_name %></strong></td>
-              <td><%= item.rione %></td>
-              <td><%= item.email %></td>
-              <td>
-                <div><strong><%= item.player1_full_name %></strong></div>
-                <div class="small"><%= item.player1_phone %></div>
-                <div class="small"><%= item.player1_tax_code %></div>
-                <div class="small"><%= item.player1_rione_criteria %></div>
-                <div class="small"><%= item.player1_rione_address %></div>
-              </td>
-              <td>
-                <% if (item.player2_full_name) { %>
-                  <div><strong><%= item.player2_full_name %></strong></div>
-                  <div class="small"><%= item.player2_phone %></div>
-                  <div class="small"><%= item.player2_tax_code %></div>
-                  <div class="small"><%= item.player2_rione_criteria %></div>
-                  <div class="small"><%= item.player2_rione_address %></div>
-                <% } else { %>
-                  -
-                <% } %>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
+    <button class="button button-yellow" type="submit">Entra</button>
+  </form>
+</div>
 <%- include('partials/footer') %>
