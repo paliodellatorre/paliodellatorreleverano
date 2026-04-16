@@ -164,16 +164,33 @@
   <div class="container">
     <div class="section-title">
       <small>Partner</small>
-      <h2>Sponsor</h2>
-      <p>Spazio dedicato agli sponsor del Palio della Torre.</p>
-    </div>
     <div class="grid-4">
-      <div class="card">Sponsor 1</div>
-      <div class="card">Sponsor 2</div>
-      <div class="card">Sponsor 3</div>
-      <div class="card">Sponsor 4</div>
+
+  <% sponsors.forEach(sponsor => { %>
+
+    <div style="text-align:center; padding:20px;">
+
+      <% if (sponsor.link) { %>
+        <a href="<%= sponsor.link %>" target="_blank">
+      <% } %>
+
+      <img
+        src="<%= sponsor.logo_url %>"
+        style="
+          max-width:160px;
+          max-height:90px;
+          object-fit:contain;
+        "
+      >
+
+      <% if (sponsor.link) { %>
+        </a>
+      <% } %>
+
     </div>
-  </div>
-</section>
+
+  <% }) %>
+
+</div>
 
 <%- include('partials/footer') %>
