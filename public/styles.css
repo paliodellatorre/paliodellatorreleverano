@@ -111,3 +111,10 @@ th, td { padding: 14px; text-align: left; vertical-align: top; border-bottom: 1p
 .admin-grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
 .sport-row { display:grid; grid-template-columns: 1.5fr .9fr .7fr auto auto; gap:10px; align-items:center; margin-bottom:10px; }
 @media (max-width: 900px){ .admin-grid { grid-template-columns: 1fr; } .sport-row { grid-template-columns:1fr; } }
+
+.form-card { max-width: 980px; margin: 0 auto; }
+.field-grid.two { display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+.nested-card { margin-top: 18px; }
+.radio-group { display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
+.checkbox { display:block; margin:10px 0; }
+.spaced-top { margin-top: 12px; }
