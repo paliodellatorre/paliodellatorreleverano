@@ -41,3 +41,11 @@ VALUES
   ('contact_email', 'info@paliodellatorre.it'),
   ('contact_address', 'Leverano (LE)')
 ON CONFLICT (key) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS sponsors (
+  id SERIAL PRIMARY KEY,
+  logo_url TEXT NOT NULL,
+  link TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW()
+);
