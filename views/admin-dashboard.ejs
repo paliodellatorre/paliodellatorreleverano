@@ -4,7 +4,7 @@
     <div class="section-title">
       <small>Pannello amministrazione</small>
       <h2>Pannello Admin</h2>
-      <p>Qui puoi gestire iscrizioni, prezzi, apertura o chiusura sport, contatti e scaricare il file Excel.</p>
+      <p>Qui puoi gestire iscrizioni, prezzi, apertura o chiusura sport, contatti, sponsor, regolamenti e scaricare il file Excel.</p>
     </div>
 
     <div class="top-actions" style="margin-bottom:18px;">
@@ -57,7 +57,7 @@
           </form>
         </div>
 
-        <div class="card">
+        <div class="card" style="margin-bottom:20px;">
           <h3 style="margin-top:0;color:var(--green);">Gestione sport</h3>
           <% sports.forEach(function(sport) { %>
             <form method="post" action="/admin/sports/<%= sport.id %>/update" class="sport-row">
@@ -76,6 +76,97 @@
               <button class="button button-yellow" type="submit">Salva sport</button>
             </form>
           <% }) %>
+        </div>
+
+        <div class="card" style="margin-bottom:20px;">
+          <h3 style="margin-top:0;color:var(--green);">Carica sponsor</h3>
+
+          <form method="post" action="/admin/sponsors/create" enctype="multipart/form-data">
+            <div style="margin-bottom:12px;">
+              <label>Nome sponsor (facoltativo)</label>
+              <input name="nome" />
+            </div>
+
+            <div style="margin-bottom:14px;">
+              <label>Logo sponsor</label>
+              <input type="file" name="logo" accept="image/*" required />
+            </div>
+
+            <button class="button button-yellow" type="submit">Carica sponsor</button>
+          </form>
+
+          <% if (sponsors && sponsors.length) { %>
+            <div style="margin-top:18px;">
+              <% sponsors.forEach(function(sponsor) { %>
+                <div class="card" style="margin-top:12px; padding:16px; text-align:center;">
+                  <img
+                    src="<%= sponsor.logo_url %>"
+                    alt="Sponsor"
+                    style="max-width:100%; max-height:80px; object-fit:contain;"
+                  />
+
+                  <form
+                    method="post"
+                    action="/admin/sponsors/<%= sponsor.id %>/delete"
+                    onsubmit="return confirm('Eliminare questo sponsor?')"
+                    style="margin-top:12px;"
+                  >
+                    <button class="button button-green" type="submit">Elimina sponsor</button>
+                  </form>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="card" style="margin-bottom:20px;">
+          <h3 style="margin-top:0;color:var(--green);">Carica regolamento PDF</h3>
+
+          <form method="post" action="/admin/regolamenti/create" enctype="multipart/form-data">
+            <div style="margin-bottom:12px;">
+              <label>Titolo regolamento</label>
+              <input name="titolo" placeholder="Es. Regolamento Padel" required />
+            </div>
+
+            <div style="margin-bottom:14px;">
+              <label>File PDF</label>
+              <input type="file" name="pdf" accept="application/pdf" required />
+            </div>
+
+            <button class="button button-yellow" type="submit">Carica regolamento</button>
+          </form>
+
+          <% if (regulations && regulations.length) { %>
+            <div style="margin-top:18px;">
+              <% regulations.forEach(function(reg) { %>
+                <div class="card" style="margin-top:12px; padding:16px;">
+                  <strong><%= reg.titolo %></strong>
+
+                  <div class="top-actions" style="margin-top:12px;">
+                    <a
+                      class="button button-yellow"
+                      href="<%= reg.file_url %>"
+                      target="_blank"
+                      style="padding:10px 14px;"
+                    >
+                      Apri PDF
+                    </a>
+
+                    <form
+                      class="inline-form"
+                      method="post"
+                      action="/admin/regolamenti/<%= reg.id %>/delete"
+                      onsubmit="return confirm('Eliminare questo regolamento?')"
+                    >
+                      <button class="button button-green" type="submit" style="padding:10px 14px;">
+                        Elimina
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
         </div>
       </div>
 
