@@ -172,3 +172,50 @@
   </div>
 </section>
 <%- include('partials/footer') %>
+
+<div class="card" style="margin-top:20px;">
+  <h2>Sponsor</h2>
+
+  <form method="post" action="/admin/sponsors/create">
+    <div class="form-grid">
+      <div>
+        <label>Logo (URL immagine)</label>
+        <input name="logo_url" required>
+      </div>
+
+      <div>
+        <label>Link (opzionale)</label>
+        <input name="link">
+      </div>
+    </div>
+
+    <button class="button button-yellow" type="submit">
+      Aggiungi sponsor
+    </button>
+  </form>
+
+  <hr style="margin:20px 0;">
+
+  <div class="grid-4">
+    <% sponsors.forEach(sponsor => { %>
+      <div class="card" style="text-align:center;">
+
+        <img
+          src="<%= sponsor.logo_url %>"
+          style="max-width:140px; max-height:80px; object-fit:contain;"
+        >
+
+        <form
+          method="post"
+          action="/admin/sponsors/<%= sponsor.id %>/delete"
+          style="margin-top:10px;"
+        >
+          <button class="button button-green">
+            Elimina
+          </button>
+        </form>
+
+      </div>
+    <% }) %>
+  </div>
+</div>
