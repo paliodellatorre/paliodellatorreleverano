@@ -41,3 +41,33 @@ VALUES
   ('contact_email', 'info@paliodellatorre.it'),
   ('contact_address', 'Leverano (LE)')
 ON CONFLICT (key) DO NOTHING;
+
+-- SPONSOR
+CREATE TABLE IF NOT EXISTS sponsors (
+  id SERIAL PRIMARY KEY,
+  nome TEXT,
+  logo_url TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- REGOLAMENTI
+CREATE TABLE IF NOT EXISTS regolamenti (
+  id SERIAL PRIMARY KEY,
+  titolo TEXT,
+  file_url TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- IMPOSTAZIONI GENERALI
+CREATE TABLE IF NOT EXISTS impostazioni (
+  id SERIAL PRIMARY KEY,
+  chiave TEXT UNIQUE,
+  valore TEXT
+);
+
+-- Inserimenti base
+INSERT INTO impostazioni (chiave, valore)
+VALUES
+('logo_palio', ''),
+('mappa_url', '')
+ON CONFLICT (chiave) DO NOTHING;
