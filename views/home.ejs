@@ -1,140 +1,355 @@
-<%- include('partials/header') %>
-<section class="hero compact">
-  <div class="hero-content">
-    <div>
-      <h1>Palio della Torre Leverano</h1>
-      <p class="subtitle">ISCRIZIONI SPORT</p>
-      <p>Compila il modulo dal tuo smartphone. Per gli sport di coppia devi inserire anche il compagno dello stesso rione.</p>
-    </div>
-  </div>
-</section>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Palio della Torre Leverano - Iscrizioni</title>
 
-<section class="section">
-  <div class="card form-card">
-    <% if (errors?.length) { %>
-      <div class="flash flash-error"><ul><% errors.forEach((e) => { %><li><%= e %></li><% }) %></ul></div>
-    <% } %>
+<style>
 
-    <form method="post" action="/iscrizioni" id="registrationForm">
-      <div class="field-grid two">
-        <div>
-          <label>Sport *</label>
-          <select name="sport_id" id="sportSelect" required>
-            <option value="">Seleziona uno sport</option>
-            <% sports.forEach((sport) => { %>
-              <option value="<%= sport.id %>" data-team-type="<%= sport.team_type %>" data-price="<%= Number(sport.price).toFixed(2) %>" data-price-label="<%= Number(sport.price).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' }) %><%= sport.team_type === 'pair' ? ' a coppia' : '' %>" <%= String(formData.sport_id||'')===String(sport.id)?'selected':'' %>><%= sport.name %> — <%= Number(sport.price).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' }) %><%= sport.team_type === 'pair' ? ' a coppia' : '' %></option>
-            <% }) %>
-          </select>
-        </div>
-        <div>
-          <label>Email *</label>
-          <input type="email" name="email" placeholder="nome@email.it" value="<%= formData.email || '' %>" required />
-          <small>La email verrà registrata insieme all'iscrizione.</small>
-        </div>
-      </div>
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    margin: 0;
+}
 
-      <div>
-        <label>Rione *</label>
-        <select name="rione" required>
-          <option value="">Scegli il tuo rione</option>
-          <% rioni.forEach((rione) => { %>
-            <option value="<%= rione %>" <%= formData.rione===rione?'selected':'' %>><%= rione %></option>
-          <% }) %>
-        </select>
-        <small>Consulta la mappa dei rioni <a href="https://www.google.com/maps/@40.2878732,17.9905045,15z/data=!3m1!4b1!4m2!6m1!1s1AiNo30X3Qloy24nwtxUo06kHozB_yC4?authuser=1&entry=ttu&g_ep=EgoyMDI1MDUwNi4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">qui</a>.</small>
-      </div>
+.container {
+    max-width: 800px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+}
 
-      <div class="card nested-card">
-        <h3>Conferma quota</h3>
-        <p>Confermo di aver compreso che l'iscrizione ha un costo di <strong id="selectedFeeText">seleziona uno sport</strong> da consegnare agli organizzatori prima dell'inizio del torneo. La maglia del proprio rione può essere acquistata a parte a € 5.</p>
-        <div class="radio-group">
-          <label><input type="radio" name="fee_confirmation" value="yes" <%= formData.fee_confirmation==='yes'?'checked':'' %> required /> Sì</label>
-          <label><input type="radio" name="fee_confirmation" value="no" <%= formData.fee_confirmation==='no'?'checked':'' %> /> No</label>
-        </div>
-      </div>
+h1 {
+    text-align: center;
+    background: #003129;
+    color: #FCBD16;
+    padding: 15px;
+}
 
-      <div class="card nested-card">
-        <h3>1° giocatore</h3>
-        <div class="field-grid two">
-          <div><label>Nome e Cognome 1° giocatore *</label><input name="player1_full_name" value="<%= formData.player1_full_name || '' %>" required /></div>
-          <div><label>Codice fiscale 1° giocatore *</label><input name="player1_tax_code" value="<%= formData.player1_tax_code || '' %>" required /></div>
-          <div><label>Numero di telefono 1° giocatore *</label><input name="player1_phone" value="<%= formData.player1_phone || '' %>" required /></div>
-          <div>
-            <label>Criterio di appartenenza al Rione *</label>
-            <select name="player1_rione_criteria" required>
-              <option value="">Seleziona</option>
-              <% rioneCriteria.forEach((c) => { %><option value="<%= c %>" <%= formData.player1_rione_criteria===c?'selected':'' %>><%= c %></option><% }) %>
-            </select>
-          </div>
-        </div>
-        <div><label>Indirizzo di appartenenza al Rione 1° giocatore *</label><input name="player1_rione_address" value="<%= formData.player1_rione_address || '' %>" required /></div>
-        <div class="radio-group spaced-top">
-          <span>Vuoi acquistare la maglia del rione per il 1° giocatore? (+ € 5)</span>
-          <label><input type="radio" name="player1_shirt" value="yes" <%= formData.player1_shirt==='yes'?'checked':'' %> required /> Sì</label>
-          <label><input type="radio" name="player1_shirt" value="no" <%= (formData.player1_shirt||'no')==='no'?'checked':'' %> /> No</label>
-        </div>
-      </div>
+label {
+    font-weight: bold;
+}
 
-      <div class="card nested-card" id="player2Card" style="display:none;">
-        <h3>2° giocatore</h3>
-        <div class="field-grid two">
-          <div><label>Nome e Cognome 2° giocatore *</label><input name="player2_full_name" value="<%= formData.player2_full_name || '' %>" /></div>
-          <div><label>Codice fiscale 2° giocatore *</label><input name="player2_tax_code" value="<%= formData.player2_tax_code || '' %>" /></div>
-          <div><label>Numero di telefono 2° giocatore *</label><input name="player2_phone" value="<%= formData.player2_phone || '' %>" /></div>
-          <div>
-            <label>Criterio di appartenenza al Rione 2° giocatore *</label>
-            <select name="player2_rione_criteria">
-              <option value="">Seleziona</option>
-              <% rioneCriteria.forEach((c) => { %><option value="<%= c %>" <%= formData.player2_rione_criteria===c?'selected':'' %>><%= c %></option><% }) %>
-            </select>
-          </div>
-        </div>
-        <div><label>Indirizzo di appartenenza al Rione 2° giocatore *</label><input name="player2_rione_address" value="<%= formData.player2_rione_address || '' %>" /></div>
-        <div class="radio-group spaced-top">
-          <span>Vuoi acquistare la maglia del rione per il 2° giocatore? (+ € 5)</span>
-          <label><input type="radio" name="player2_shirt" value="yes" <%= formData.player2_shirt==='yes'?'checked':'' %> /> Sì</label>
-          <label><input type="radio" name="player2_shirt" value="no" <%= (formData.player2_shirt||'no')==='no'?'checked':'' %> /> No</label>
-        </div>
-      </div>
+input, select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    margin-bottom: 12px;
+}
 
-      <div class="card nested-card">
-        <h3>Conferme obbligatorie</h3>
-        <label class="checkbox"><input type="checkbox" name="terms_rione_check" value="yes" <%= formData.terms_rione_check==='yes'?'checked':'' %> /> Confermo di aver compreso che l'appartenenza al Rione verrà verificata pena l'esclusione da tutte le attività del Torneo dei Rioni.</label>
-        <label class="checkbox"><input type="checkbox" name="terms_organizer_confirmation" value="yes" <%= formData.terms_organizer_confirmation==='yes'?'checked':'' %> /> Confermo di aver compreso che l'iscrizione dovrà essere confermata dagli organizzatori.</label>
-        <label class="checkbox"><input type="checkbox" name="terms_privacy" value="yes" <%= formData.terms_privacy==='yes'?'checked':'' %> /> Autorizzo il trattamento dei dati personali nel rispetto del Regolamento Europeo 2016/679 e normativa vigente.</label>
-        <label class="checkbox"><input type="checkbox" name="terms_images" value="yes" <%= formData.terms_images==='yes'?'checked':'' %> /> Autorizzo la pubblicazione e/o diffusione gratuita delle immagini sui canali social del Palio della Torre e associazioni collegate.</label>
-        <label class="checkbox"><input type="checkbox" name="terms_liability" value="yes" <%= formData.terms_liability==='yes'?'checked':'' %> /> I partecipanti si assumono ogni responsabilità per l'attività sportiva e sollevano gli organizzatori da responsabilità civili e penali.</label>
-      </div>
+button {
+    background: #003129;
+    color: #FCBD16;
+    padding: 12px;
+    border: none;
+    width: 100%;
+    font-size: 16px;
+    cursor: pointer;
+}
 
-      <div>
-        <label>Note</label>
-        <textarea name="notes" rows="3"><%= formData.notes || '' %></textarea>
-      </div>
+button:hover {
+    background: #00231d;
+}
 
-      <button class="button button-yellow" type="submit">Invia iscrizione</button>
-    </form>
-  </div>
-</section>
+.section {
+    margin-top: 25px;
+}
+
+.coppia {
+    display: none;
+}
+
+.link-mappa {
+    text-decoration: underline;
+    color: #003129;
+    font-weight: bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Palio della Torre Leverano<br>ISCRIZIONI SPORT</h1>
+
+<p>
+Compila il modulo dal tuo smartphone.  
+Per gli sport di coppia devi inserire anche il compagno dello stesso rione.
+</p>
+
+<form method="POST" action="/iscrizioni">
+
+<div class="section">
+
+<label>Sport *</label>
+
+<select name="sport_id" id="sportSelect" required>
+
+<option value="">Seleziona uno sport</option>
+
+<% sports.forEach(function(sport) { %>
+
+<option
+value="<%= sport.id %>"
+data-price="<%= sport.price %>"
+data-type="<%= sport.team_type %>"
+>
+<%= sport.name %>
+</option>
+
+<% }) %>
+
+</select>
+
+</div>
+
+<div class="section">
+
+<label>Email *</label>
+
+<input type="email" name="email" placeholder="nome@email.it" required>
+
+La email verrà registrata insieme all'iscrizione.
+
+</div>
+
+<div class="section">
+
+<label>Rione *</label>
+
+<select name="rione" required>
+
+<option value="">Scegli il tuo rione</option>
+
+<% rioni.forEach(function(rione) { %>
+
+<option value="<%= rione %>"><%= rione %></option>
+
+<% }) %>
+
+</select>
+
+<p>
+
+Consulta la mappa dei rioni
+
+<a
+class="link-mappa"
+href="https://www.google.com/maps/@40.2878732,17.9905045,15z/data=!3m1!4b1!4m2!6m1!1s1AiNo30X3Qloy24nwtxUo06kHozB_yC4"
+target="_blank"
+>
+
+qui
+
+</a>
+
+</p>
+
+</div>
+
+<div class="section">
+
+<h3>Conferma quota</h3>
+
+<p>
+
+Confermo di aver compreso che l'iscrizione ha un costo di
+
+<strong id="quotaText">--</strong>
+
+da consegnare agli organizzatori prima dell'inizio del torneo.
+
+La maglia del proprio rione può essere acquistata a parte a € 5.
+
+</p>
+
+<label>
+
+<input type="radio" name="fee_confirmation" value="yes" required>
+Sì
+
+</label>
+
+<label>
+
+<input type="radio" name="fee_confirmation" value="no">
+No
+
+</label>
+
+</div>
+
+<div class="section">
+
+<h3>1° giocatore</h3>
+
+<label>Nome e Cognome 1° giocatore *</label>
+<input name="player1_full_name" required>
+
+<label>Codice fiscale 1° giocatore *</label>
+<input name="player1_tax_code" required>
+
+<label>Numero di telefono 1° giocatore *</label>
+<input name="player1_phone" required>
+
+<label>Criterio di appartenenza al Rione *</label>
+
+<select name="player1_rione_criteria" required>
+
+<option value="">Seleziona</option>
+
+<% rioneCriteria.forEach(function(c) { %>
+
+<option value="<%= c %>"><%= c %></option>
+
+<% }) %>
+
+</select>
+
+<label>Indirizzo di appartenenza al Rione 1° giocatore *</label>
+
+<input name="player1_rione_address" required>
+
+<label>
+
+<input type="checkbox" name="player1_shirt" value="yes">
+
+Vuoi acquistare la maglia del rione per il 1° giocatore? (+ € 5)
+
+</label>
+
+</div>
+
+<div class="section coppia" id="secondoGiocatore">
+
+<h3>2° giocatore</h3>
+
+<label>Nome e Cognome 2° giocatore *</label>
+<input name="player2_full_name">
+
+<label>Codice fiscale 2° giocatore *</label>
+<input name="player2_tax_code">
+
+<label>Numero di telefono 2° giocatore *</label>
+<input name="player2_phone">
+
+<label>Criterio di appartenenza al Rione *</label>
+
+<select name="player2_rione_criteria">
+
+<option value="">Seleziona</option>
+
+<% rioneCriteria.forEach(function(c) { %>
+
+<option value="<%= c %>"><%= c %></option>
+
+<% }) %>
+
+</select>
+
+<label>Indirizzo di appartenenza al Rione 2° giocatore *</label>
+
+<input name="player2_rione_address">
+
+<label>
+
+<input type="checkbox" name="player2_shirt" value="yes">
+
+Vuoi acquistare la maglia del rione per il 2° giocatore? (+ € 5)
+
+</label>
+
+</div>
+
+<div class="section">
+
+<h3>Conferme obbligatorie</h3>
+
+<label>
+
+<input type="checkbox" name="terms_rione_check" value="yes" required>
+
+Confermo che l'appartenenza al Rione verrà verificata
+
+</label>
+
+<label>
+
+<input type="checkbox" name="terms_organizer_confirmation" value="yes" required>
+
+Confermo che l'iscrizione sarà verificata dagli organizzatori
+
+</label>
+
+<label>
+
+<input type="checkbox" name="terms_privacy" value="yes" required>
+
+Autorizzo il trattamento dei dati personali
+
+</label>
+
+<label>
+
+<input type="checkbox" name="terms_images" value="yes" required>
+
+Autorizzo la pubblicazione delle immagini
+
+</label>
+
+<label>
+
+<input type="checkbox" name="terms_liability" value="yes" required>
+
+Sollevano gli organizzatori da responsabilità
+
+</label>
+
+</div>
+
+<button type="submit">
+
+Invia iscrizione
+
+</button>
+
+</form>
+
+</div>
 
 <script>
-  const sportSelect = document.getElementById('sportSelect');
-  const selectedFeeText = document.getElementById('selectedFeeText');
-  const player2Card = document.getElementById('player2Card');
-  const pairFields = player2Card.querySelectorAll('input, select');
-  function updateSportUi() {
-    const opt = sportSelect.options[sportSelect.selectedIndex];
-    const isPair = opt && opt.dataset.teamType === 'pair';
-    player2Card.style.display = isPair ? 'block' : 'none';
-    pairFields.forEach((el) => {
-      if (el.name !== 'player2_shirt') el.required = isPair;
-    });
-    if (!opt || !opt.value) {
-      selectedFeeText.textContent = 'seleziona uno sport';
-    } else {
-      selectedFeeText.textContent = opt.dataset.priceLabel || '___';
-    }
-  }
-  sportSelect.addEventListener('change', updateSportUi);
-  updateSportUi();
+
+const select = document.getElementById("sportSelect");
+const quotaText = document.getElementById("quotaText");
+const secondo = document.getElementById("secondoGiocatore");
+
+select.addEventListener("change", function() {
+
+const option = this.options[this.selectedIndex];
+
+const price = option.getAttribute("data-price");
+const type = option.getAttribute("data-type");
+
+if (!price) return;
+
+if (type === "pair") {
+
+quotaText.innerText = price + " € a coppia";
+secondo.style.display = "block";
+
+} else {
+
+quotaText.innerText = price + " €";
+secondo.style.display = "none";
+
+}
+
+});
+
 </script>
-<%- include('partials/footer') %>
+
+</body>
+</html>
