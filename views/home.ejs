@@ -1,379 +1,270 @@
 <%- include('partials/header') %>
 
-<!-- HERO -->
 <section class="hero">
   <div class="container hero-grid">
-
     <div>
-      <span class="badge">Torneo dei Rioni · Iscrizioni 2026</span>
-
       <h1>Il Palio della Torre</h1>
-
+      <p class="small" style="color:#FCBD16;font-weight:800;letter-spacing:.4px;">Torneo dei Rioni · Iscrizioni 2026</p>
       <p>
         Un evento che unisce sport, appartenenza e tradizione.
         Il Palio della Torre rappresenta la sfida tra rioni,
         la passione della comunità e lo spirito di squadra.
       </p>
 
-      <div style="margin-top:20px;">
-        <a href="#iscrizioni" class="button button-yellow">
-          Iscriviti 2026
-        </a>
-
-        <a href="#regolamenti" class="button button-outline">
-          Scopri il regolamento
-        </a>
+      <div class="top-actions" style="margin-top:22px;">
+        <a href="#iscrizioni" class="button button-yellow">Vai alle iscrizioni</a>
+        <a href="#regolamenti" class="button button-outline">Scopri i regolamenti</a>
       </div>
     </div>
 
     <div class="card hero-card">
-
-      <div class="logo-circle">
-        LOGO<br>PALIO
-      </div>
-
+      <div class="logo-circle">LOGO<br>PALIO</div>
       <div class="stats">
-
         <div class="stat">
           <strong><%= sports.length %></strong>
-          Sport aperti
+          <span>Sport aperti</span>
         </div>
-
         <div class="stat">
-          <strong>
-            <%= settings.registrations_open === 'true' ? 'ON' : 'OFF' %>
-          </strong>
-          Iscrizioni
+          <strong><%= settings.registrations_open === 'true' ? 'ON' : 'OFF' %></strong>
+          <span>Iscrizioni</span>
         </div>
-
       </div>
-
     </div>
-
   </div>
 </section>
 
-<!-- STORIA -->
 <section class="section">
-
   <div class="container">
-
     <div class="section-title">
       <small>Storia del torneo</small>
       <h2>Storia del torneo dei rioni</h2>
       <p>
-        Questa sezione può essere scritta con la storia ufficiale del Palio della Torre,
+        Questa sezione può essere aggiornata in qualsiasi momento con la storia ufficiale del Palio della Torre,
         del torneo dei rioni e della sua evoluzione nel tempo.
       </p>
     </div>
 
     <div class="grid-3">
-
       <div class="card">
         Nato per valorizzare il senso di appartenenza ai rioni e creare un momento di festa condivisa.
       </div>
-
       <div class="card">
         Negli anni il Palio è diventato un appuntamento fisso, coinvolgendo atleti, famiglie, sponsor e volontari.
       </div>
-
       <div class="card">
         Oggi è una manifestazione simbolo di aggregazione, competizione sana e orgoglio locale.
       </div>
-
     </div>
-
   </div>
-
 </section>
 
-<!-- ISCRIZIONI -->
 <section id="iscrizioni" class="section">
-
   <div class="container two-col">
-
     <div class="card">
+      <h2>Iscrizioni sport</h2>
+      <p style="margin-top:0;">
+        Compila il modulo dal tuo smartphone.
+      </p>
 
-      <h2>Iscriviti agli sport del Palio</h2>
-
-      <% if (errors.length) { %>
+      <% if (errors && errors.length) { %>
         <div class="notice notice-error">
-          <% errors.forEach(e => { %>
-            <div><%= e %></div>
+          <% errors.forEach(function(error) { %>
+            <div><%= error %></div>
           <% }) %>
         </div>
       <% } %>
 
       <form method="POST" action="/iscrizioni">
-
         <div class="form-grid">
-
           <div>
             <label>Nome e cognome</label>
-            <input name="full_name" value="<%= formData.full_name || '' %>" required>
+            <input name="full_name" value="<%= formData.full_name || '' %>" required />
           </div>
 
           <div>
             <label>Data di nascita</label>
-            <input type="date" name="birth_date" value="<%= formData.birth_date || '' %>">
+            <input type="date" name="birth_date" value="<%= formData.birth_date || '' %>" />
           </div>
 
           <div>
             <label>Telefono</label>
-            <input name="phone" value="<%= formData.phone || '' %>" required>
+            <input name="phone" value="<%= formData.phone || '' %>" required />
           </div>
 
           <div>
             <label>Email</label>
-            <input name="email" value="<%= formData.email || '' %>" required>
+            <input type="email" name="email" value="<%= formData.email || '' %>" required />
           </div>
 
           <div>
             <label>Rione</label>
-
             <select name="rione" required>
-
-              <option value="">
-                Scegli il tuo rione
-              </option>
-
-              <% rioni.forEach(rione => { %>
-
-                <option
-                  value="<%= rione %>"
-                  <%= formData.rione === rione ? 'selected' : '' %>
-                >
+              <option value="">Scegli il tuo rione</option>
+              <% rioni.forEach(function(rione) { %>
+                <option value="<%= rione %>" <%= formData.rione === rione ? 'selected' : '' %>>
                   <%= rione %>
                 </option>
-
               <% }) %>
-
             </select>
 
+            <div class="small" style="margin-top:8px;">
+              Consulta la mappa dei rioni
+              <a
+                href="https://www.google.com/maps/@40.2878732,17.9905045,15z/data=!3m1!4b1!4m2!6m1!1s1AiNo30X3Qloy24nwtxUo06kHozB_yC4?authuser=1&entry=ttu&g_ep=EgoyMDI1MDUwNi4wIKXMDSoASAFQAw%3D%3D"
+                target="_blank"
+                rel="noopener noreferrer"
+                style="text-decoration: underline; font-weight: 800;"
+              >
+                qui
+              </a>
+            </div>
           </div>
 
           <div>
             <label>Sport</label>
-
             <select name="sport_id" required>
-
-              <option value="">
-                Seleziona uno sport
-              </option>
-
-              <% sports.forEach(sport => { %>
-
-                <option value="<%= sport.id %>">
-
-                  <%= sport.name %>
-                  —
-                  <%= sport.price %> €
-
+              <option value="">Seleziona uno sport</option>
+              <% sports.forEach(function(sport) { %>
+                <option value="<%= sport.id %>" <%= String(formData.sport_id || '') === String(sport.id) ? 'selected' : '' %>>
+                  <%= sport.name %> — €<%= Number(sport.price).toFixed(2) %>
                 </option>
-
               <% }) %>
-
             </select>
-
           </div>
-
         </div>
 
-        <div style="margin-top:15px;">
-
+        <div style="margin-top:16px;">
           <label>Note</label>
-
-          <textarea name="notes">
-            <%= formData.notes || '' %>
-          </textarea>
-
+          <textarea name="notes"><%= formData.notes || '' %></textarea>
         </div>
 
-        <div style="margin-top:20px;">
-
-          <button class="button button-yellow">
-            Invia iscrizione
-          </button>
-
+        <div style="margin-top:18px;">
+          <button class="button button-yellow" type="submit">Invia iscrizione</button>
         </div>
-
       </form>
-
     </div>
 
     <div class="card">
+      <h3 style="margin-top:0;color:var(--green);">Sistema completo</h3>
+      <p>
+        Le iscrizioni vengono salvate in modo permanente sul database e sono sempre gestibili dal pannello admin.
+      </p>
 
-      <h3>Sistema completo</h3>
-
-      <ul>
-
-        <li>Iscrizione online per ogni sport</li>
-        <li>Pannello admin con elenco completo</li>
-        <li>Modifica ed eliminazione iscrizioni</li>
-        <li>Export Excel reale</li>
-        <li>Gestione prezzi</li>
-        <li>Chiusura generale iscrizioni</li>
-        <li>Database PostgreSQL persistente</li>
-
+      <ul style="padding-left:18px; line-height:1.9;">
+        <li>Iscrizioni online</li>
+        <li>Gestione sport e prezzi</li>
+        <li>Apertura e chiusura iscrizioni</li>
+        <li>Export Excel</li>
+        <li>Contatti modificabili</li>
+        <li>Sponsor dinamici</li>
+        <li>Regolamenti PDF cliccabili</li>
       </ul>
-
     </div>
-
   </div>
-
 </section>
 
-<!-- REGOLAMENTI -->
 <section id="regolamenti" class="section">
-
   <div class="container">
-
     <div class="section-title">
       <small>Regolamenti</small>
       <h2>Regolamenti</h2>
+      <p>
+        Qui compariranno automaticamente i regolamenti caricati dal pannello admin.
+      </p>
     </div>
 
     <div class="grid-4">
-
-      <div class="card">
-        Regolamento generale evento
-      </div>
-
-      <div class="card">
-        Regolamento iscrizioni e quote
-      </div>
-
-      <div class="card">
-        Regolamento sport e categorie
-      </div>
-
-      <div class="card">
-        Privacy e trattamento dati
-      </div>
-
+      <% if (regulations && regulations.length) { %>
+        <% regulations.forEach(function(reg) { %>
+          <a href="<%= reg.file_url %>" target="_blank" class="card">
+            <strong><%= reg.titolo %></strong>
+          </a>
+        <% }) %>
+      <% } else { %>
+        <div class="card">Regolamento generale</div>
+        <div class="card">Regolamento Padel</div>
+        <div class="card">Regolamento Calcio</div>
+        <div class="card">Privacy e trattamento dati</div>
+      <% } %>
     </div>
-
   </div>
-
 </section>
 
-<!-- CHI SIAMO -->
 <section id="chi-siamo" class="section">
-
   <div class="container">
-
     <div class="section-title">
       <small>Organizzazione</small>
       <h2>Chi siamo</h2>
+      <p>
+        Una sezione dedicata all’organizzazione, ai volontari e al significato del Palio della Torre per il territorio.
+      </p>
     </div>
 
     <div class="card">
-
-      Il Palio della Torre nasce dalla volontà di promuovere lo sport,
-      il territorio e il senso di comunità.
-
-      Qui puoi aggiungere il testo ufficiale dell'organizzazione.
-
+      Il Palio della Torre nasce dalla volontà di promuovere lo sport, il territorio e il senso di comunità.
+      Questa sezione può essere aggiornata con il testo ufficiale dell’organizzazione.
     </div>
-
   </div>
-
 </section>
 
-<!-- CONTATTI -->
 <section id="contatti" class="section">
-
   <div class="container">
-
     <div class="section-title">
       <small>Contatti</small>
       <h2>Contatti</h2>
+      <p>
+        Informazioni ufficiali e riferimenti dell’organizzazione.
+      </p>
     </div>
 
     <div class="grid-3">
-
       <div class="card">
-
-        Telefono
-
-        <br><br>
-
-        <strong>
-          <%= settings.contact_phone || '---' %>
-        </strong>
-
+        <strong>Telefono</strong>
+        <div style="margin-top:10px;"><%= settings.contact_phone || '---' %></div>
       </div>
 
       <div class="card">
-
-        Email
-
-        <br><br>
-
-        <strong>
-          <%= settings.contact_email || '---' %>
-        </strong>
-
+        <strong>Email</strong>
+        <div style="margin-top:10px;"><%= settings.contact_email || '---' %></div>
       </div>
 
       <div class="card">
-
-        Sede
-
-        <br><br>
-
-        <strong>
-          <%= settings.contact_address || 'Leverano (LE)' %>
-        </strong>
-
+        <strong>Sede</strong>
+        <div style="margin-top:10px;"><%= settings.contact_address || 'Leverano (LE)' %></div>
       </div>
-
     </div>
-
   </div>
-
 </section>
 
-<!-- SPONSOR -->
 <section id="sponsor" class="section">
-
   <div class="container">
-
     <div class="section-title">
       <small>Partner</small>
       <h2>Sponsor</h2>
+      <p>
+        Loghi caricati direttamente dal pannello admin.
+      </p>
     </div>
 
     <div class="grid-4">
-
-      <% if (sponsors.length === 0) { %>
-
+      <% if (sponsors && sponsors.length) { %>
+        <% sponsors.forEach(function(sponsor) { %>
+          <div class="card" style="text-align:center; padding:20px;">
+            <img
+              src="<%= sponsor.logo_url %>"
+              alt="Sponsor"
+              style="max-width:100%; max-height:80px; object-fit:contain;"
+            />
+          </div>
+        <% }) %>
+      <% } else { %>
         <div class="card">Sponsor 1</div>
         <div class="card">Sponsor 2</div>
         <div class="card">Sponsor 3</div>
         <div class="card">Sponsor 4</div>
-
-      <% } else { %>
-
-        <% sponsors.forEach(sponsor => { %>
-
-          <div class="card" style="text-align:center; padding:20px;">
-
-            <img
-              src="<%= sponsor.logo_url %>"
-              style="max-width:100%; max-height:80px;"
-            >
-
-          </div>
-
-        <% }) %>
-
       <% } %>
-
     </div>
-
   </div>
-
 </section>
 
 <%- include('partials/footer') %>
