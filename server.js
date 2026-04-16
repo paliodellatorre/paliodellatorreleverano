@@ -69,7 +69,33 @@ async function getSettingsMap() {
   }, {});
 }
 
-app.get('/', async (req, res) => {
+// SPONSOR LIST
+app.post('/admin/sponsors/create', requireAuth, async (req, res) => {
+  const { logo_url, link } = req.body;
+
+  if (!logo_url?.trim()) {
+    setFlash(req, 'error', 'Inserisci il logo.');
+    return res.redirect('/admin');
+  }
+
+  await pool.query(
+    'INSERT INTO sponsors (logo_url, link) VALUES ($1,$2)',
+    [logo_url.trim(), link?.trim() || null]
+  );
+
+  setFlash(req, 'success', 'Sponsor aggiunto.');
+  res.redirect('/admin');
+});
+
+app.post('/admin/sponsors/:id/delete', requireAuth, async (req, res) => {
+  await pool.query(
+    'DELETE FROM sponsors WHERE id = $1',
+    [req.params.id]
+  );
+
+  setFlash(req, 'success', 'Sponsor eliminato.');
+  res.redirect('/admin');
+});
   const sports = await pool.query('SELECT * FROM sports WHERE is_open = true ORDER BY name');
   const settings = await getSettingsMap();
   res.render('home', {
@@ -165,6 +191,9 @@ app.get('/admin', requireAuth, async (req, res) => {
 
 app.get('/admin/registrations/:id/edit', requireAuth, async (req, res) => {
   const registrations = await pool.query(`
+  const sponsors = await pool.query(
+  'SELECT * FROM sponsors WHERE is_active = true ORDER BY id DESC'
+);
     SELECT r.*, s.name AS sport_name, s.price AS sport_price
     FROM registrations r
     JOIN sports s ON s.id = r.sport_id
@@ -178,12 +207,13 @@ app.get('/admin/registrations/:id/edit', requireAuth, async (req, res) => {
     return res.redirect('/admin');
   }
   res.render('admin-dashboard', {
-    title: 'Pannello Admin',
-    registrations: registrations.rows,
-    sports: sports.rows,
-    settings,
-    editItem: editItem.rows[0],
-  });
+  title: 'Pannello Admin',
+  registrations: registrations.rows,
+  sports: sports.rows,
+  settings,
+  sponsors: sponsors.rows,
+  editItem: null,
+});
 });
 
 app.post('/admin/registrations/:id/update', requireAuth, async (req, res) => {
