@@ -58,12 +58,32 @@ async function runSchema() {
   `);
 
   await pool.query(`
+    ALTER TABLE sponsors
+    ADD COLUMN IF NOT EXISTS nome TEXT
+  `);
+
+  await pool.query(`
+    ALTER TABLE sponsors
+    ADD COLUMN IF NOT EXISTS logo_url TEXT
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS regolamenti (
       id SERIAL PRIMARY KEY,
       titolo TEXT NOT NULL,
       file_url TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
+  `);
+
+  await pool.query(`
+    ALTER TABLE regolamenti
+    ADD COLUMN IF NOT EXISTS titolo TEXT
+  `);
+
+  await pool.query(`
+    ALTER TABLE regolamenti
+    ADD COLUMN IF NOT EXISTS file_url TEXT
   `);
 }
 
@@ -420,7 +440,13 @@ app.post('/admin/sponsors/create', requireAuth, upload.single('logo'), async (re
 
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        { folder: 'palio/sponsors' },
+        {
+          folder: 'palio/sponsors',
+          resource_type: 'image',
+          use_filename: true,
+          unique_filename: true,
+          allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'svg']
+        },
         (error, uploaded) => {
           if (error) return reject(error);
           resolve(uploaded);
@@ -437,6 +463,7 @@ app.post('/admin/sponsors/create', requireAuth, upload.single('logo'), async (re
     setFlash(req, 'success', 'Sponsor caricato con successo.');
     res.redirect('/admin');
   } catch (err) {
+    console.error('Errore upload sponsor:', err);
     next(err);
   }
 });
@@ -459,11 +486,20 @@ app.post('/admin/regolamenti/create', requireAuth, upload.single('pdf'), async (
       return res.redirect('/admin');
     }
 
+    const titolo = (req.body.titolo || 'Regolamento').trim();
+
+    const safeTitle = titolo
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
           folder: 'palio/regolamenti',
-          resource_type: 'raw'
+          resource_type: 'raw',
+          public_id: `${safeTitle}-${Date.now()}`,
+          format: 'pdf'
         },
         (error, uploaded) => {
           if (error) return reject(error);
@@ -475,12 +511,13 @@ app.post('/admin/regolamenti/create', requireAuth, upload.single('pdf'), async (
 
     await pool.query(
       'INSERT INTO regolamenti (titolo, file_url) VALUES ($1, $2)',
-      [req.body.titolo || 'Regolamento', result.secure_url]
+      [titolo, result.secure_url]
     );
 
     setFlash(req, 'success', 'Regolamento caricato con successo.');
     res.redirect('/admin');
   } catch (err) {
+    console.error('Errore upload regolamento:', err);
     next(err);
   }
 });
