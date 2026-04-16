@@ -7,8 +7,17 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const ExcelJS = require('exceljs');
 const fs = require('fs');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 const PORT = process.env.PORT || 3000;
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -36,6 +45,47 @@ const pool = new Pool({
 });
 
 async function runSchema() {
+  const schemaPath = path.join(__dirname, 'db', 'schema.sql');
+
+  if (fs.existsSync(schemaPath)) {
+    const schema = fs.readFileSync(schemaPath, 'utf8');
+    await pool.query(schema);
+  } else {
+    console.warn('db/schema.sql non trovato, avvio senza esecuzione schema.');
+  }
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sponsors (
+      id SERIAL PRIMARY KEY,
+      nome TEXT,
+      logo_url TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS regolamenti (
+      id SERIAL PRIMARY KEY,
+      titolo TEXT,
+      file_url TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS impostazioni (
+      id SERIAL PRIMARY KEY,
+      chiave TEXT UNIQUE,
+      valore TEXT
+    )
+  `);
+
+  await pool.query(`
+    INSERT INTO impostazioni (chiave, valore)
+    VALUES ('logo_palio', ''), ('mappa_url', '')
+    ON CONFLICT (chiave) DO NOTHING
+  `);
+}
   const schemaPath = path.join(__dirname, 'db', 'schema.sql');
   if (fs.existsSync(schemaPath)) {
     const schema = fs.readFileSync(schemaPath, 'utf8');
@@ -109,6 +159,35 @@ async function getSettingsMap() {
 }
 
 app.get('/', async (req, res, next) => {
+  try {
+    const sports = await pool.query('SELECT * FROM sports WHERE is_open = true ORDER BY name');
+    const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY id DESC');
+    const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
+    const settings = await getSettingsMap();
+
+    res.render('home', {
+      title: 'Palio della Torre',
+      sports: sports.rows,
+      sponsors: sponsors.rows,
+      regulations: regulations.rows,
+      settings,
+      rioni: [
+        'POZZOLUNGO SUD',
+        'POZZOLUNGO NORD',
+        'PATURA CUPA QUARTARARU',
+        'IANA',
+        'CENTRO',
+        'CHIANCA',
+        'ZITA ROSA',
+        'CONSOLAZIONE'
+      ],
+      formData: {},
+      errors: [],
+    });
+  } catch (err) {
+    next(err);
+  }
+});
   try {
     const sports = await pool.query('SELECT * FROM sports WHERE is_open = true ORDER BY name');
     const settings = await getSettingsMap();
@@ -192,7 +271,33 @@ app.post('/iscrizioni', async (req, res, next) => {
   }
 });
 
-app.get('/admin/login', (req, res) => {
+app.get('/admin', requireAuth, async (req, res, next) => {
+  try {
+    const registrations = await pool.query(`
+      SELECT r.*, s.name AS sport_name, s.price AS sport_price
+      FROM registrations r
+      JOIN sports s ON s.id = r.sport_id
+      ORDER BY r.created_at DESC
+    `);
+
+    const sports = await pool.query('SELECT * FROM sports ORDER BY name');
+    const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY id DESC');
+    const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
+    const settings = await getSettingsMap();
+
+    res.render('admin-dashboard', {
+      title: 'Pannello Admin',
+      registrations: registrations.rows,
+      sports: sports.rows,
+      sponsors: sponsors.rows,
+      regulations: regulations.rows,
+      settings,
+      editItem: null,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
   res.render('admin-login', { title: 'Login Admin' });
 });
 
@@ -427,7 +532,88 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
   }
 });
 
-app.use((err, req, res, next) => {
+app.post('/admin/sponsors/create', requireAuth, upload.single('logo'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      setFlash(req, 'error', 'Seleziona un logo sponsor.');
+      return res.redirect('/admin');
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: 'palio/sponsors' },
+        (error, uploaded) => {
+          if (error) return reject(error);
+          resolve(uploaded);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
+
+    await pool.query(
+      'INSERT INTO sponsors (nome, logo_url) VALUES ($1, $2)',
+      [req.body.nome || '', result.secure_url]
+    );
+
+    setFlash(req, 'success', 'Sponsor caricato con successo.');
+    res.redirect('/admin');
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/admin/sponsors/:id/delete', requireAuth, async (req, res, next) => {
+  try {
+    await pool.query('DELETE FROM sponsors WHERE id = $1', [req.params.id]);
+    setFlash(req, 'success', 'Sponsor eliminato.');
+    res.redirect('/admin');
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/admin/regolamenti/create', requireAuth, upload.single('pdf'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      setFlash(req, 'error', 'Seleziona un file PDF.');
+      return res.redirect('/admin');
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'palio/regolamenti',
+          resource_type: 'raw'
+        },
+        (error, uploaded) => {
+          if (error) return reject(error);
+          resolve(uploaded);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
+
+    await pool.query(
+      'INSERT INTO regolamenti (titolo, file_url) VALUES ($1, $2)',
+      [req.body.titolo || 'Regolamento', result.secure_url]
+    );
+
+    setFlash(req, 'success', 'Regolamento caricato con successo.');
+    res.redirect('/admin');
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/admin/regolamenti/:id/delete', requireAuth, async (req, res, next) => {
+  try {
+    await pool.query('DELETE FROM regolamenti WHERE id = $1', [req.params.id]);
+    setFlash(req, 'success', 'Regolamento eliminato.');
+    res.redirect('/admin');
+  } catch (err) {
+    next(err);
+  }
+});
   console.error(err);
   res.status(500).send('Errore interno del server. Controlla la configurazione del database e delle variabili ambiente.');
 });
