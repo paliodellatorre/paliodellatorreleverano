@@ -63,7 +63,7 @@
     <div class="card">
       <h2>Iscrizioni sport</h2>
       <p style="margin-top:0;">
-        Compila il modulo dal tuo smartphone.
+        Compila il modulo dal tuo smartphone. Per gli sport di coppia devi inserire anche il compagno dello stesso rione.
       </p>
 
       <% if (errors && errors.length) { %>
@@ -74,30 +74,37 @@
         </div>
       <% } %>
 
-      <form method="POST" action="/iscrizioni">
+      <form method="POST" action="/iscrizioni" id="palioForm">
         <div class="form-grid">
           <div>
-            <label>Nome e cognome</label>
-            <input name="full_name" value="<%= formData.full_name || '' %>" required />
+            <label>Sport *</label>
+            <select name="sport_id" id="sport_id" required>
+              <option value="">Seleziona uno sport</option>
+              <% sports.forEach(function(sport) { 
+                   const lowerName = String(sport.name || '').toLowerCase();
+                   const isPair = lowerName.includes('coppia') || ['padel','burraco','scopa','biliardino'].some(k => lowerName.includes(k));
+              %>
+                <option
+                  value="<%= sport.id %>"
+                  data-name="<%= sport.name %>"
+                  data-price="<%= Number(sport.price).toFixed(2) %>"
+                  data-pair="<%= isPair ? 'true' : 'false' %>"
+                  <%= String(formData.sport_id || '') === String(sport.id) ? 'selected' : '' %>
+                >
+                  <%= sport.name %> — €<%= Number(sport.price).toFixed(2) %><%= isPair ? ' a coppia' : '' %>
+                </option>
+              <% }) %>
+            </select>
           </div>
 
           <div>
-            <label>Data di nascita</label>
-            <input type="date" name="birth_date" value="<%= formData.birth_date || '' %>" />
-          </div>
-
-          <div>
-            <label>Telefono</label>
-            <input name="phone" value="<%= formData.phone || '' %>" required />
-          </div>
-
-          <div>
-            <label>Email</label>
+            <label>Email *</label>
             <input type="email" name="email" value="<%= formData.email || '' %>" required />
+            <div class="small" style="margin-top:8px;">La email verrà registrata insieme all'iscrizione.</div>
           </div>
 
           <div>
-            <label>Rione</label>
+            <label>Rione *</label>
             <select name="rione" required>
               <option value="">Scegli il tuo rione</option>
               <% rioni.forEach(function(rione) { %>
@@ -121,16 +128,159 @@
           </div>
 
           <div>
-            <label>Sport</label>
-            <select name="sport_id" required>
-              <option value="">Seleziona uno sport</option>
-              <% sports.forEach(function(sport) { %>
-                <option value="<%= sport.id %>" <%= String(formData.sport_id || '') === String(sport.id) ? 'selected' : '' %>>
-                  <%= sport.name %> — €<%= Number(sport.price).toFixed(2) %>
-                </option>
-              <% }) %>
-            </select>
+            <label>Conferma quota *</label>
+            <div class="card" style="padding:16px; border-radius:18px; box-shadow:none; border:1px solid #e5e7eb;">
+              <div style="line-height:1.7;">
+                Confermo di aver compreso che l'iscrizione ha un costo di
+                <strong id="quotaLabel">seleziona uno sport</strong>
+                da consegnare agli organizzatori prima dell'inizio del torneo.
+                La maglia del proprio rione può essere acquistata a parte a € 5.
+              </div>
+
+              <div class="radio-group" style="margin-top:12px;">
+                <label>
+                  <input type="radio" name="fee_confirmation" value="yes" required>
+                  Sì
+                </label>
+
+                <label>
+                  <input type="radio" name="fee_confirmation" value="no">
+                  No
+                </label>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <h3 style="margin-top:0;color:var(--green);">1° giocatore</h3>
+
+          <div class="form-grid">
+            <div>
+              <label>Nome e Cognome 1° giocatore *</label>
+              <input name="player1_full_name" required />
+            </div>
+
+            <div>
+              <label>Codice fiscale 1° giocatore *</label>
+              <input name="player1_tax_code" required />
+            </div>
+
+            <div>
+              <label>Numero di telefono 1° giocatore *</label>
+              <input name="phone" value="<%= formData.phone || '' %>" required />
+            </div>
+
+            <div>
+              <label>Criterio di appartenenza al Rione *</label>
+              <select name="player1_rione_criteria" required>
+                <option value="">Seleziona</option>
+                <option value="Residenza">Residenza</option>
+                <option value="Domicilio">Domicilio</option>
+                <option value="Legame familiare">Legame familiare</option>
+                <option value="Altro criterio approvato">Altro criterio approvato</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <label>Indirizzo di appartenenza al Rione 1° giocatore *</label>
+            <input name="player1_rione_address" required />
+          </div>
+
+          <div class="radio-group" style="margin-top:16px;">
+            <span style="font-weight:800;color:var(--green);">Vuoi acquistare la maglia del rione per il 1° giocatore? (+ € 5)</span>
+
+            <label>
+              <input type="radio" name="player1_shirt" value="yes" required>
+              Sì
+            </label>
+
+            <label>
+              <input type="radio" name="player1_shirt" value="no">
+              No
+            </label>
+          </div>
+        </div>
+
+        <div class="card" id="secondPlayerCard" style="margin-top:20px; display:none;">
+          <h3 style="margin-top:0;color:var(--green);">2° giocatore</h3>
+
+          <div class="form-grid">
+            <div>
+              <label>Nome e Cognome 2° giocatore *</label>
+              <input name="player2_full_name" id="player2_full_name" />
+            </div>
+
+            <div>
+              <label>Codice fiscale 2° giocatore *</label>
+              <input name="player2_tax_code" id="player2_tax_code" />
+            </div>
+
+            <div>
+              <label>Numero di telefono 2° giocatore *</label>
+              <input name="player2_phone" id="player2_phone" />
+            </div>
+
+            <div>
+              <label>Criterio di appartenenza al Rione *</label>
+              <select name="player2_rione_criteria" id="player2_rione_criteria">
+                <option value="">Seleziona</option>
+                <option value="Residenza">Residenza</option>
+                <option value="Domicilio">Domicilio</option>
+                <option value="Legame familiare">Legame familiare</option>
+                <option value="Altro criterio approvato">Altro criterio approvato</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <label>Indirizzo di appartenenza al Rione 2° giocatore *</label>
+            <input name="player2_rione_address" id="player2_rione_address" />
+          </div>
+
+          <div class="radio-group" style="margin-top:16px;">
+            <span style="font-weight:800;color:var(--green);">Vuoi acquistare la maglia del rione per il 2° giocatore? (+ € 5)</span>
+
+            <label>
+              <input type="radio" name="player2_shirt" value="yes">
+              Sì
+            </label>
+
+            <label>
+              <input type="radio" name="player2_shirt" value="no">
+              No
+            </label>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <h3 style="margin-top:0;color:var(--green);">Conferme obbligatorie</h3>
+
+          <label class="checkbox">
+            <input type="checkbox" name="terms_rione_check" value="yes" required />
+            Confermo di aver compreso che l'appartenenza al Rione verrà verificata pena l'esclusione da tutte le attività del Torneo dei Rioni.
+          </label>
+
+          <label class="checkbox">
+            <input type="checkbox" name="terms_organizer_confirmation" value="yes" required />
+            Confermo di aver compreso che l'iscrizione dovrà essere confermata dagli organizzatori.
+          </label>
+
+          <label class="checkbox">
+            <input type="checkbox" name="terms_privacy" value="yes" required />
+            Autorizzo il trattamento dei dati personali nel rispetto del Regolamento Europeo 2016/679 e normativa vigente.
+          </label>
+
+          <label class="checkbox">
+            <input type="checkbox" name="terms_images" value="yes" required />
+            Autorizzo la pubblicazione e/o diffusione gratuita delle immagini sui canali social del Palio della Torre e associazioni collegate.
+          </label>
+
+          <label class="checkbox">
+            <input type="checkbox" name="terms_liability" value="yes" required />
+            I partecipanti si assumono ogni responsabilità per l'attività sportiva e sollevano gli organizzatori da responsabilità civili e penali.
+          </label>
         </div>
 
         <div style="margin-top:16px;">
@@ -246,25 +396,72 @@
       </p>
     </div>
 
-    <div class="grid-4">
-      <% if (sponsors && sponsors.length) { %>
+    <% if (sponsors && sponsors.length) { %>
+      <div style="display:grid; grid-template-columns:1fr; gap:20px;">
         <% sponsors.forEach(function(sponsor) { %>
-          <div class="card" style="text-align:center; padding:20px;">
+          <div class="card" style="text-align:center; padding:28px;">
             <img
               src="<%= sponsor.logo_url %>"
               alt="Sponsor"
-              style="max-width:100%; max-height:80px; object-fit:contain;"
+              style="max-width:100%; max-height:140px; object-fit:contain;"
             />
           </div>
         <% }) %>
-      <% } else { %>
+      </div>
+    <% } else { %>
+      <div style="display:grid; grid-template-columns:1fr; gap:20px;">
         <div class="card">Sponsor 1</div>
         <div class="card">Sponsor 2</div>
         <div class="card">Sponsor 3</div>
         <div class="card">Sponsor 4</div>
-      <% } %>
-    </div>
+      </div>
+    <% } %>
   </div>
 </section>
+
+<script>
+  (function () {
+    const sportSelect = document.getElementById('sport_id');
+    const quotaLabel = document.getElementById('quotaLabel');
+    const secondPlayerCard = document.getElementById('secondPlayerCard');
+
+    const secondPlayerFields = [
+      document.getElementById('player2_full_name'),
+      document.getElementById('player2_tax_code'),
+      document.getElementById('player2_phone'),
+      document.getElementById('player2_rione_criteria'),
+      document.getElementById('player2_rione_address')
+    ];
+
+    function updateSportUI() {
+      const option = sportSelect.options[sportSelect.selectedIndex];
+
+      if (!option || !option.value) {
+        quotaLabel.textContent = 'seleziona uno sport';
+        secondPlayerCard.style.display = 'none';
+        secondPlayerFields.forEach(el => el && el.removeAttribute('required'));
+        return;
+      }
+
+      const price = option.getAttribute('data-price') || '0.00';
+      const isPair = option.getAttribute('data-pair') === 'true';
+
+      quotaLabel.textContent = '€' + price + (isPair ? ' a coppia' : '');
+
+      if (isPair) {
+        secondPlayerCard.style.display = 'block';
+        secondPlayerFields.forEach(el => el && el.setAttribute('required', 'required'));
+      } else {
+        secondPlayerCard.style.display = 'none';
+        secondPlayerFields.forEach(el => el && el.removeAttribute('required'));
+      }
+    }
+
+    if (sportSelect) {
+      sportSelect.addEventListener('change', updateSportUI);
+      updateSportUI();
+    }
+  })();
+</script>
 
 <%- include('partials/footer') %>
