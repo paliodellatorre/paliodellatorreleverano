@@ -324,55 +324,6 @@ app.post('/iscrizioni', async (req, res, next) => {
     next(err);
   }
 });
-  try {
-    const {
-      full_name,
-      birth_date,
-      phone,
-      email,
-      rione,
-      sport_id,
-      notes
-    } = req.body;
-
-    const errors = [];
-    const settings = await getSettingsMap();
-    const sports = await pool.query(
-      'SELECT * FROM sports WHERE is_open = true ORDER BY name'
-    );
-    const sponsors = await pool.query(
-      'SELECT * FROM sponsors ORDER BY id DESC'
-    );
-    const regulations = await pool.query(
-      'SELECT * FROM regolamenti ORDER BY id DESC'
-    );
-
-    if (settings.registrations_open !== 'true') {
-      errors.push('Le iscrizioni sono momentaneamente chiuse.');
-    }
-    if (!full_name?.trim()) errors.push('Inserisci nome e cognome.');
-    if (!phone?.trim()) errors.push('Inserisci il telefono.');
-    if (!email?.trim()) errors.push("Inserisci l'email.");
-    if (!rione?.trim()) errors.push('Inserisci il rione.');
-    if (!sport_id) errors.push('Seleziona uno sport.');
-
-    const selectedSport = sports.rows.find((s) => String(s.id) === String(sport_id));
-    if (sport_id && !selectedSport) {
-      errors.push('Lo sport selezionato non è disponibile.');
-    }
-
-    if (errors.length) {
-      return res.status(400).render('home', {
-        title: 'Palio della Torre',
-        sports: sports.rows,
-        sponsors: sponsors.rows,
-        regulations: regulations.rows,
-        settings,
-        rioni: RIONI,
-        formData: req.body,
-        errors
-      });
-    }
 
     await pool.query(
       `INSERT INTO registrations (full_name, birth_date, phone, email, rione, sport_id, notes)
