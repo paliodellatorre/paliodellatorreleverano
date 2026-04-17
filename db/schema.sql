@@ -71,3 +71,25 @@ VALUES
 ('logo_palio', ''),
 ('mappa_url', '')
 ON CONFLICT (chiave) DO NOTHING;
+
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player1_full_name TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player1_tax_code TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player1_phone TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player1_rione_criteria TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player1_rione_address TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player1_shirt TEXT;
+
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player2_full_name TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player2_tax_code TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player2_phone TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player2_rione_criteria TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player2_rione_address TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player2_shirt TEXT;
+
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS fee_confirmation TEXT;
+
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_rione_check TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_organizer_confirmation TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_privacy TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_images TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_liability TEXT;
