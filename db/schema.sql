@@ -93,3 +93,6 @@ ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_organizer_confirmation 
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_privacy TEXT;
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_images TEXT;
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_liability TEXT;
+
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player1_shirt_size TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player2_shirt_size TEXT;
