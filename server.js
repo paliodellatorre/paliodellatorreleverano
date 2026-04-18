@@ -613,32 +613,118 @@ app.post('/admin/regolamenti/:id/delete', requireAuth, async (req, res, next) =>
 app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(`
-      SELECT r.id, r.full_name, r.birth_date, r.phone, r.email, r.rione, s.name AS sport, s.price,
-             r.notes, r.created_at, r.updated_at
+      SELECT 
+        r.id,
+        r.full_name,
+        r.birth_date,
+        r.phone,
+        r.email,
+        r.rione,
+        s.name AS sport,
+        s.price,
+        r.notes,
+        r.created_at,
+        r.updated_at,
+
+        r.player1_full_name,
+        r.player1_tax_code,
+        r.player1_phone,
+        r.player1_rione_criteria,
+        r.player1_rione_address,
+        r.player1_shirt,
+
+        r.player2_full_name,
+        r.player2_tax_code,
+        r.player2_phone,
+        r.player2_rione_criteria,
+        r.player2_rione_address,
+        r.player2_shirt,
+
+        r.fee_confirmation,
+        r.terms_rione_check,
+        r.terms_organizer_confirmation,
+        r.terms_privacy,
+        r.terms_images,
+        r.terms_liability
+
       FROM registrations r
       JOIN sports s ON s.id = r.sport_id
-      ORDER BY r.created_at DESC
+      ORDER BY s.name ASC, r.created_at DESC
     `);
 
     const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Iscrizioni');
 
-    sheet.columns = [
-      { header: 'ID', key: 'id', width: 10 },
-      { header: 'Nome e cognome', key: 'full_name', width: 28 },
-      { header: 'Data di nascita', key: 'birth_date', width: 16 },
-      { header: 'Telefono', key: 'phone', width: 18 },
-      { header: 'Email', key: 'email', width: 28 },
-      { header: 'Rione', key: 'rione', width: 18 },
-      { header: 'Sport', key: 'sport', width: 18 },
-      { header: 'Prezzo', key: 'price', width: 12 },
-      { header: 'Note', key: 'notes', width: 32 },
-      { header: 'Creato il', key: 'created_at', width: 24 },
-      { header: 'Aggiornato il', key: 'updated_at', width: 24 }
-    ];
+    const grouped = {};
+    rows.forEach((row) => {
+      if (!grouped[row.sport]) grouped[row.sport] = [];
+      grouped[row.sport].push(row);
+    });
 
-    rows.forEach((row) => sheet.addRow(row));
-    sheet.getRow(1).font = { bold: true };
+    Object.keys(grouped).forEach((sportName) => {
+      const safeSheetName = sportName.substring(0, 31);
+      const sheet = workbook.addWorksheet(safeSheetName);
+
+      sheet.columns = [
+        { header: 'ID', key: 'id', width: 8 },
+        { header: 'Sport', key: 'sport', width: 24 },
+        { header: 'Prezzo', key: 'price', width: 12 },
+        { header: 'Rione', key: 'rione', width: 22 },
+
+        { header: 'Email', key: 'email', width: 28 },
+        { header: 'Data di nascita', key: 'birth_date', width: 16 },
+
+        { header: '1° Giocatore', key: 'player1_full_name', width: 28 },
+        { header: 'CF 1°', key: 'player1_tax_code', width: 22 },
+        { header: 'Telefono 1°', key: 'player1_phone', width: 18 },
+        { header: 'Criterio Rione 1°', key: 'player1_rione_criteria', width: 22 },
+        { header: 'Indirizzo Rione 1°', key: 'player1_rione_address', width: 28 },
+        { header: 'Maglia 1°', key: 'player1_shirt', width: 12 },
+
+        { header: '2° Giocatore', key: 'player2_full_name', width: 28 },
+        { header: 'CF 2°', key: 'player2_tax_code', width: 22 },
+        { header: 'Telefono 2°', key: 'player2_phone', width: 18 },
+        { header: 'Criterio Rione 2°', key: 'player2_rione_criteria', width: 22 },
+        { header: 'Indirizzo Rione 2°', key: 'player2_rione_address', width: 28 },
+        { header: 'Maglia 2°', key: 'player2_shirt', width: 12 },
+
+        { header: 'Conferma quota', key: 'fee_confirmation', width: 16 },
+        { header: 'Check Rione', key: 'terms_rione_check', width: 14 },
+        { header: 'Conferma Organizzatori', key: 'terms_organizer_confirmation', width: 22 },
+        { header: 'Privacy', key: 'terms_privacy', width: 12 },
+        { header: 'Immagini', key: 'terms_images', width: 12 },
+        { header: 'Responsabilità', key: 'terms_liability', width: 16 },
+
+        { header: 'Note', key: 'notes', width: 32 },
+        { header: 'Creato il', key: 'created_at', width: 22 },
+        { header: 'Aggiornato il', key: 'updated_at', width: 22 }
+      ];
+
+      grouped[sportName].forEach((row) => {
+        sheet.addRow({
+          ...row,
+          birth_date: row.birth_date
+            ? new Date(row.birth_date).toLocaleDateString('it-IT')
+            : '',
+          created_at: row.created_at
+            ? new Date(row.created_at).toLocaleString('it-IT')
+            : '',
+          updated_at: row.updated_at
+            ? new Date(row.updated_at).toLocaleString('it-IT')
+            : ''
+        });
+      });
+
+      sheet.getRow(1).font = { bold: true };
+      sheet.views = [{ state: 'frozen', ySplit: 1 }];
+    });
+
+    if (Object.keys(grouped).length === 0) {
+      const sheet = workbook.addWorksheet('Iscrizioni');
+      sheet.columns = [
+        { header: 'Messaggio', key: 'msg', width: 30 }
+      ];
+      sheet.addRow({ msg: 'Nessuna iscrizione presente' });
+    }
 
     res.setHeader(
       'Content-Type',
@@ -646,7 +732,7 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
     );
     res.setHeader(
       'Content-Disposition',
-      'attachment; filename="iscrizioni-palio-della-torre.xlsx"'
+      'attachment; filename="iscrizioni-palio-divise-per-sport.xlsx"'
     );
 
     await workbook.xlsx.write(res);
