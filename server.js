@@ -492,11 +492,11 @@ app.post('/admin/sports/:id/update', requireAuth, async (req, res, next) => {
 app.post('/admin/settings/update', requireAuth, async (req, res, next) => {
   try {
     const payload = {
-      registrations_open: req.body.registrations_open === 'true' ? 'true' : 'false',
-      contact_phone: req.body.contact_phone || '',
-      contact_email: req.body.contact_email || '',
-      contact_address: req.body.contact_address || ''
-    };
+  registrations_open: req.body.registrations_open === 'true' ? 'true' : 'false',
+  contact_email: req.body.contact_email || '',
+  contact_facebook: req.body.contact_facebook || '',
+  contact_instagram: req.body.contact_instagram || ''
+};
 
     for (const [key, value] of Object.entries(payload)) {
       await pool.query(
