@@ -198,7 +198,9 @@ app.post('/iscrizioni', async (req, res, next) => {
       terms_organizer_confirmation,
       terms_privacy,
       terms_images,
-      terms_liability
+      terms_liability,
+      player1_shirt_size,
+      player2_shirt_size
     } = req.body;
 
     const errors = [];
