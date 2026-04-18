@@ -97,3 +97,27 @@ th, td { padding: 14px; text-align: left; vertical-align: top; border-bottom: 1p
   .nav { align-items: flex-start; flex-direction: column; }
   .nav-links { gap: 12px; }
 }
+
+.radio-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.radio-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.radio-inline input {
+  width: auto;
+}
+
+@media (max-width: 768px) {
+  .radio-row {
+    gap: 12px;
+  }
+}
