@@ -391,24 +391,30 @@ Il Palio della Torre si svolge con il patrocinio del Comune di Leverano, a testi
       <small>Contatti</small>
       <h2>Contatti</h2>
       <p>
-        Informazioni ufficiali e riferimenti dell’organizzazione.
+        Seguici sui canali ufficiali del Palio della Torre.
       </p>
     </div>
 
     <div class="grid-3">
       <div class="card">
-        <strong>Telefono</strong>
-        <div style="margin-top:10px;"><%= settings.contact_phone || '---' %></div>
+        <strong>Facebook</strong>
+        <div style="margin-top:10px;">
+          <%= settings.contact_facebook || 'Il Palio della Torre - Torneo dei Rioni Leverano' %>
+        </div>
+      </div>
+
+      <div class="card">
+        <strong>Instagram</strong>
+        <div style="margin-top:10px;">
+          <%= settings.contact_instagram || 'ilpaliodellatorreleverano' %>
+        </div>
       </div>
 
       <div class="card">
         <strong>Email</strong>
-        <div style="margin-top:10px;"><%= settings.contact_email || '---' %></div>
-      </div>
-
-      <div class="card">
-        <strong>Sede</strong>
-        <div style="margin-top:10px;"><%= settings.contact_address || 'Leverano (LE)' %></div>
+        <div style="margin-top:10px;">
+          <%= settings.contact_email || '---' %>
+        </div>
       </div>
     </div>
   </div>
