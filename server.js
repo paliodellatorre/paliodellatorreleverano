@@ -181,21 +181,18 @@ app.post('/iscrizioni', async (req, res, next) => {
       rione,
       sport_id,
       notes,
-
       player1_full_name,
       player1_tax_code,
       player1_phone,
       player1_rione_criteria,
       player1_rione_address,
       player1_shirt,
-
       player2_full_name,
       player2_tax_code,
       player2_phone,
       player2_rione_criteria,
       player2_rione_address,
       player2_shirt,
-
       fee_confirmation,
       terms_rione_check,
       terms_organizer_confirmation,
@@ -223,7 +220,9 @@ app.post('/iscrizioni', async (req, res, next) => {
     if (!email?.trim()) errors.push("Inserisci l'email.");
     if (!rione?.trim()) errors.push('Inserisci il rione.');
     if (!sport_id) errors.push('Seleziona uno sport.');
-    if (!fee_confirmation || fee_confirmation !== 'yes') errors.push('Devi confermare la quota.');
+    if (!fee_confirmation || fee_confirmation !== 'yes') {
+      errors.push('Devi confermare la quota.');
+    }
 
     if (!player1_full_name?.trim()) errors.push('Inserisci nome e cognome del 1° giocatore.');
     if (!player1_tax_code?.trim()) errors.push('Inserisci il codice fiscale del 1° giocatore.');
@@ -235,7 +234,7 @@ app.post('/iscrizioni', async (req, res, next) => {
     if (terms_rione_check !== 'yes') errors.push('Devi accettare il controllo appartenenza al rione.');
     if (terms_organizer_confirmation !== 'yes') errors.push("Devi accettare la conferma dell'iscrizione dagli organizzatori.");
     if (terms_privacy !== 'yes') errors.push('Devi accettare il trattamento dei dati personali.');
-    if (terms_images !== 'yes') errors.push("Devi accettare la pubblicazione delle immagini.");
+    if (terms_images !== 'yes') errors.push('Devi accettare la pubblicazione delle immagini.');
     if (terms_liability !== 'yes') errors.push('Devi accettare la clausola di responsabilità.');
 
     const selectedSport = sports.rows.find((s) => String(s.id) === String(sport_id));
@@ -268,83 +267,6 @@ app.post('/iscrizioni', async (req, res, next) => {
         formData: req.body,
         errors
       });
-    }
-
-    await pool.query(
-      `INSERT INTO registrations (
-        full_name, birth_date, phone, email, rione, sport_id, notes,
-        player1_full_name, player1_tax_code, player1_phone, player1_rione_criteria, player1_rione_address, player1_shirt,
-        player2_full_name, player2_tax_code, player2_phone, player2_rione_criteria, player2_rione_address, player2_shirt,
-        fee_confirmation,
-        terms_rione_check, terms_organizer_confirmation, terms_privacy, terms_images, terms_liability
-      )
-      VALUES (
-        $1,$2,$3,$4,$5,$6,$7,
-        $8,$9,$10,$11,$12,$13,
-        $14,$15,$16,$17,$18,$19,
-        $20,
-        $21,$22,$23,$24,$25
-      )`,
-      [
-        player1_full_name?.trim() || full_name?.trim() || null,
-        birth_date || null,
-        player1_phone?.trim() || phone?.trim() || null,
-        email.trim(),
-        rione.trim(),
-        sport_id,
-        notes?.trim() || null,
-
-        player1_full_name?.trim() || null,
-        player1_tax_code?.trim() || null,
-        player1_phone?.trim() || null,
-        player1_rione_criteria?.trim() || null,
-        player1_rione_address?.trim() || null,
-        player1_shirt || null,
-
-        isPair ? (player2_full_name?.trim() || null) : null,
-        isPair ? (player2_tax_code?.trim() || null) : null,
-        isPair ? (player2_phone?.trim() || null) : null,
-        isPair ? (player2_rione_criteria?.trim() || null) : null,
-        isPair ? (player2_rione_address?.trim() || null) : null,
-        isPair ? (player2_shirt || null) : null,
-
-        fee_confirmation || null,
-
-        terms_rione_check || null,
-        terms_organizer_confirmation || null,
-        terms_privacy || null,
-        terms_images || null,
-        terms_liability || null
-      ]
-    );
-
-    setFlash(req, 'success', 'Iscrizione inviata correttamente.');
-    res.redirect('/');
-  } catch (err) {
-    next(err);
-  }
-});
-
-    await pool.query(
-      `INSERT INTO registrations (full_name, birth_date, phone, email, rione, sport_id, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [
-        full_name.trim(),
-        birth_date || null,
-        phone.trim(),
-        email.trim(),
-        rione.trim(),
-        sport_id,
-        notes?.trim() || null
-      ]
-    );
-
-    setFlash(req, 'success', 'Iscrizione inviata correttamente.');
-    res.redirect('/');
-  } catch (err) {
-    next(err);
-  }
-});
 
 /* LOGIN ADMIN */
 app.get('/admin/login', (req, res) => {
