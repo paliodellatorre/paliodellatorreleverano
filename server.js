@@ -653,8 +653,8 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
     `);
 
     const workbook = new ExcelJS.Workbook();
-
     const grouped = {};
+
     rows.forEach((row) => {
       if (!grouped[row.sport]) grouped[row.sport] = [];
       grouped[row.sport].push(row);
@@ -665,64 +665,93 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
       const sheet = workbook.addWorksheet(safeSheetName);
 
       sheet.columns = [
-        { header: 'ID', key: 'id', width: 8 },
-        { header: 'Sport', key: 'sport', width: 24 },
-        { header: 'Prezzo', key: 'price', width: 12 },
-        { header: 'Rione', key: 'rione', width: 22 },
-
-        { header: 'Email', key: 'email', width: 28 },
-        { header: 'Data di nascita', key: 'birth_date', width: 16 },
-
-        { header: '1° Giocatore', key: 'player1_full_name', width: 28 },
-        { header: 'CF 1°', key: 'player1_tax_code', width: 22 },
-        { header: 'Telefono 1°', key: 'player1_phone', width: 18 },
-        { header: 'Criterio Rione 1°', key: 'player1_rione_criteria', width: 22 },
-        { header: 'Indirizzo Rione 1°', key: 'player1_rione_address', width: 28 },
-        { header: 'Maglia 1°', key: 'player1_shirt', width: 12 },
-
-        { header: '2° Giocatore', key: 'player2_full_name', width: 28 },
-        { header: 'CF 2°', key: 'player2_tax_code', width: 22 },
-        { header: 'Telefono 2°', key: 'player2_phone', width: 18 },
-        { header: 'Criterio Rione 2°', key: 'player2_rione_criteria', width: 22 },
-        { header: 'Indirizzo Rione 2°', key: 'player2_rione_address', width: 28 },
-        { header: 'Maglia 2°', key: 'player2_shirt', width: 12 },
-
-        { header: 'Conferma quota', key: 'fee_confirmation', width: 16 },
-        { header: 'Check Rione', key: 'terms_rione_check', width: 14 },
-        { header: 'Conferma Organizzatori', key: 'terms_organizer_confirmation', width: 22 },
-        { header: 'Privacy', key: 'terms_privacy', width: 12 },
-        { header: 'Immagini', key: 'terms_images', width: 12 },
-        { header: 'Responsabilità', key: 'terms_liability', width: 16 },
-
-        { header: 'Note', key: 'notes', width: 32 },
-        { header: 'Creato il', key: 'created_at', width: 22 },
-        { header: 'Aggiornato il', key: 'updated_at', width: 22 }
+        { header: 'NOME COGNOME', key: 'nomi', width: 30 },
+        { header: 'DATA DI NASCITA', key: 'birth_date', width: 18 },
+        { header: 'CF', key: 'cf', width: 28 },
+        { header: 'NUMERO TELEFONO', key: 'telefoni', width: 22 },
+        { header: 'EMAIL', key: 'email', width: 30 },
+        { header: 'MAGLIETTA (SI/NO)', key: 'maglietta', width: 18 },
+        { header: 'RIONE', key: 'rione', width: 22 },
+        { header: 'SPORT', key: 'sport', width: 24 },
+        { header: 'PREZZO', key: 'price', width: 12 },
+        { header: 'CRITERIO RIONE', key: 'criterio_rione', width: 24 },
+        { header: 'INDIRIZZO RIONE', key: 'indirizzo_rione', width: 30 },
+        { header: 'CONFERMA QUOTA', key: 'fee_confirmation', width: 18 },
+        { header: 'CONTROLLO RIONE', key: 'terms_rione_check', width: 18 },
+        { header: 'CONFERMA ORGANIZZATORI', key: 'terms_organizer_confirmation', width: 24 },
+        { header: 'PRIVACY', key: 'terms_privacy', width: 12 },
+        { header: 'IMMAGINI', key: 'terms_images', width: 12 },
+        { header: 'RESPONSABILITÀ', key: 'terms_liability', width: 16 },
+        { header: 'NOTE', key: 'notes', width: 35 },
+        { header: 'CREATO IL', key: 'created_at', width: 22 }
       ];
 
       grouped[sportName].forEach((row) => {
+        const hasSecondPlayer = row.player2_full_name && String(row.player2_full_name).trim() !== '';
+
         sheet.addRow({
-          ...row,
+          nomi: hasSecondPlayer
+            ? `${row.player1_full_name || ''}\n${row.player2_full_name || ''}`
+            : `${row.player1_full_name || row.full_name || ''}`,
+
           birth_date: row.birth_date
             ? new Date(row.birth_date).toLocaleDateString('it-IT')
             : '',
+
+          cf: hasSecondPlayer
+            ? `${row.player1_tax_code || ''}\n${row.player2_tax_code || ''}`
+            : `${row.player1_tax_code || ''}`,
+
+          telefoni: hasSecondPlayer
+            ? `${row.player1_phone || row.phone || ''}\n${row.player2_phone || ''}`
+            : `${row.player1_phone || row.phone || ''}`,
+
+          email: row.email || '',
+
+          maglietta: hasSecondPlayer
+            ? `${row.player1_shirt || ''}\n${row.player2_shirt || ''}`
+            : `${row.player1_shirt || ''}`,
+
+          rione: row.rione || '',
+          sport: row.sport || '',
+          price: row.price != null ? Number(row.price).toFixed(2) : '',
+
+          criterio_rione: hasSecondPlayer
+            ? `${row.player1_rione_criteria || ''}\n${row.player2_rione_criteria || ''}`
+            : `${row.player1_rione_criteria || ''}`,
+
+          indirizzo_rione: hasSecondPlayer
+            ? `${row.player1_rione_address || ''}\n${row.player2_rione_address || ''}`
+            : `${row.player1_rione_address || ''}`,
+
+          fee_confirmation: row.fee_confirmation || '',
+          terms_rione_check: row.terms_rione_check || '',
+          terms_organizer_confirmation: row.terms_organizer_confirmation || '',
+          terms_privacy: row.terms_privacy || '',
+          terms_images: row.terms_images || '',
+          terms_liability: row.terms_liability || '',
+          notes: row.notes || '',
           created_at: row.created_at
             ? new Date(row.created_at).toLocaleString('it-IT')
-            : '',
-          updated_at: row.updated_at
-            ? new Date(row.updated_at).toLocaleString('it-IT')
             : ''
         });
       });
 
       sheet.getRow(1).font = { bold: true };
+      sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+      sheet.eachRow((row, rowNumber) => {
+        row.alignment = { vertical: 'top', wrapText: true };
+        if (rowNumber > 1) {
+          row.height = 32;
+        }
+      });
     });
 
     if (Object.keys(grouped).length === 0) {
       const sheet = workbook.addWorksheet('Iscrizioni');
-      sheet.columns = [
-        { header: 'Messaggio', key: 'msg', width: 30 }
-      ];
+      sheet.columns = [{ header: 'Messaggio', key: 'msg', width: 30 }];
       sheet.addRow({ msg: 'Nessuna iscrizione presente' });
     }
 
