@@ -615,9 +615,7 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
     const { rows } = await pool.query(`
       SELECT 
         r.id,
-        r.full_name,
         r.birth_date,
-        r.phone,
         r.email,
         r.rione,
         s.name AS sport,
@@ -632,6 +630,7 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
         r.player1_rione_criteria,
         r.player1_rione_address,
         r.player1_shirt,
+        r.player1_shirt_size,
 
         r.player2_full_name,
         r.player2_tax_code,
@@ -639,6 +638,7 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
         r.player2_rione_criteria,
         r.player2_rione_address,
         r.player2_shirt,
+        r.player2_shirt_size,
 
         r.fee_confirmation,
         r.terms_rione_check,
@@ -652,12 +652,66 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
       ORDER BY s.name ASC, r.created_at DESC
     `);
 
+    function formatMaglia(value, size) {
+      if (!value) return 'NO';
+      const v = String(value).toLowerCase();
+      if (v === 'true' || v === 'yes' || v === 'si') {
+        return size ? `SI - ${size}` : 'SI';
+      }
+      return 'NO';
+    }
+
     const workbook = new ExcelJS.Workbook();
     const grouped = {};
 
     rows.forEach((row) => {
       if (!grouped[row.sport]) grouped[row.sport] = [];
-      grouped[row.sport].push(row);
+
+      grouped[row.sport].push({
+        nome_cognome: row.player1_full_name || '',
+        data_nascita: row.birth_date ? new Date(row.birth_date).toLocaleDateString('it-IT') : '',
+        cf: row.player1_tax_code || '',
+        telefono: row.player1_phone || '',
+        email: row.email || '',
+        maglietta: formatMaglia(row.player1_shirt, row.player1_shirt_size),
+        rione: row.rione || '',
+        sport: row.sport || '',
+        prezzo: row.price != null ? Number(row.price).toFixed(2) : '',
+        criterio_rione: row.player1_rione_criteria || '',
+        indirizzo_rione: row.player1_rione_address || '',
+        conferma_quota: row.fee_confirmation || '',
+        controllo_rione: row.terms_rione_check || '',
+        conferma_organizzatori: row.terms_organizer_confirmation || '',
+        privacy: row.terms_privacy || '',
+        immagini: row.terms_images || '',
+        responsabilita: row.terms_liability || '',
+        note: row.notes || '',
+        creato_il: row.created_at ? new Date(row.created_at).toLocaleString('it-IT') : ''
+      });
+
+      if (row.player2_full_name && String(row.player2_full_name).trim() !== '') {
+        grouped[row.sport].push({
+          nome_cognome: row.player2_full_name || '',
+          data_nascita: row.birth_date ? new Date(row.birth_date).toLocaleDateString('it-IT') : '',
+          cf: row.player2_tax_code || '',
+          telefono: row.player2_phone || '',
+          email: row.email || '',
+          maglietta: formatMaglia(row.player2_shirt, row.player2_shirt_size),
+          rione: row.rione || '',
+          sport: row.sport || '',
+          prezzo: row.price != null ? Number(row.price).toFixed(2) : '',
+          criterio_rione: row.player2_rione_criteria || '',
+          indirizzo_rione: row.player2_rione_address || '',
+          conferma_quota: row.fee_confirmation || '',
+          controllo_rione: row.terms_rione_check || '',
+          conferma_organizzatori: row.terms_organizer_confirmation || '',
+          privacy: row.terms_privacy || '',
+          immagini: row.terms_images || '',
+          responsabilita: row.terms_liability || '',
+          note: row.notes || '',
+          creato_il: row.created_at ? new Date(row.created_at).toLocaleString('it-IT') : ''
+        });
+      }
     });
 
     Object.keys(grouped).forEach((sportName) => {
@@ -665,88 +719,31 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
       const sheet = workbook.addWorksheet(safeSheetName);
 
       sheet.columns = [
-        { header: 'NOME COGNOME', key: 'nomi', width: 30 },
-        { header: 'DATA DI NASCITA', key: 'birth_date', width: 18 },
-        { header: 'CF', key: 'cf', width: 28 },
-        { header: 'NUMERO TELEFONO', key: 'telefoni', width: 22 },
-        { header: 'EMAIL', key: 'email', width: 30 },
-        { header: 'MAGLIETTA (SI/NO)', key: 'maglietta', width: 18 },
-        { header: 'RIONE', key: 'rione', width: 22 },
+        { header: 'NOME COGNOME', key: 'nome_cognome', width: 28 },
+        { header: 'DATA DI NASCITA', key: 'data_nascita', width: 18 },
+        { header: 'CF', key: 'cf', width: 22 },
+        { header: 'NUMERO TELEFONO', key: 'telefono', width: 18 },
+        { header: 'EMAIL', key: 'email', width: 28 },
+        { header: 'MAGLIETTA', key: 'maglietta', width: 16 },
+        { header: 'RIONE', key: 'rione', width: 20 },
         { header: 'SPORT', key: 'sport', width: 24 },
-        { header: 'PREZZO', key: 'price', width: 12 },
-        { header: 'CRITERIO RIONE', key: 'criterio_rione', width: 24 },
-        { header: 'INDIRIZZO RIONE', key: 'indirizzo_rione', width: 30 },
-        { header: 'CONFERMA QUOTA', key: 'fee_confirmation', width: 18 },
-        { header: 'CONTROLLO RIONE', key: 'terms_rione_check', width: 18 },
-        { header: 'CONFERMA ORGANIZZATORI', key: 'terms_organizer_confirmation', width: 24 },
-        { header: 'PRIVACY', key: 'terms_privacy', width: 12 },
-        { header: 'IMMAGINI', key: 'terms_images', width: 12 },
-        { header: 'RESPONSABILITÀ', key: 'terms_liability', width: 16 },
-        { header: 'NOTE', key: 'notes', width: 35 },
-        { header: 'CREATO IL', key: 'created_at', width: 22 }
+        { header: 'PREZZO', key: 'prezzo', width: 12 },
+        { header: 'CRITERIO RIONE', key: 'criterio_rione', width: 22 },
+        { header: 'INDIRIZZO RIONE', key: 'indirizzo_rione', width: 28 },
+        { header: 'CONFERMA QUOTA', key: 'conferma_quota', width: 18 },
+        { header: 'CONTROLLO RIONE', key: 'controllo_rione', width: 18 },
+        { header: 'CONFERMA ORGANIZZATORI', key: 'conferma_organizzatori', width: 24 },
+        { header: 'PRIVACY', key: 'privacy', width: 12 },
+        { header: 'IMMAGINI', key: 'immagini', width: 12 },
+        { header: 'RESPONSABILITÀ', key: 'responsabilita', width: 16 },
+        { header: 'NOTE', key: 'note', width: 30 },
+        { header: 'CREATO IL', key: 'creato_il', width: 22 }
       ];
 
-      grouped[sportName].forEach((row) => {
-        const hasSecondPlayer = row.player2_full_name && String(row.player2_full_name).trim() !== '';
-
-        sheet.addRow({
-          nomi: hasSecondPlayer
-            ? `${row.player1_full_name || ''}\n${row.player2_full_name || ''}`
-            : `${row.player1_full_name || row.full_name || ''}`,
-
-          birth_date: row.birth_date
-            ? new Date(row.birth_date).toLocaleDateString('it-IT')
-            : '',
-
-          cf: hasSecondPlayer
-            ? `${row.player1_tax_code || ''}\n${row.player2_tax_code || ''}`
-            : `${row.player1_tax_code || ''}`,
-
-          telefoni: hasSecondPlayer
-            ? `${row.player1_phone || row.phone || ''}\n${row.player2_phone || ''}`
-            : `${row.player1_phone || row.phone || ''}`,
-
-          email: row.email || '',
-
-          maglietta: hasSecondPlayer
-            ? `${row.player1_shirt || ''}\n${row.player2_shirt || ''}`
-            : `${row.player1_shirt || ''}`,
-
-          rione: row.rione || '',
-          sport: row.sport || '',
-          price: row.price != null ? Number(row.price).toFixed(2) : '',
-
-          criterio_rione: hasSecondPlayer
-            ? `${row.player1_rione_criteria || ''}\n${row.player2_rione_criteria || ''}`
-            : `${row.player1_rione_criteria || ''}`,
-
-          indirizzo_rione: hasSecondPlayer
-            ? `${row.player1_rione_address || ''}\n${row.player2_rione_address || ''}`
-            : `${row.player1_rione_address || ''}`,
-
-          fee_confirmation: row.fee_confirmation || '',
-          terms_rione_check: row.terms_rione_check || '',
-          terms_organizer_confirmation: row.terms_organizer_confirmation || '',
-          terms_privacy: row.terms_privacy || '',
-          terms_images: row.terms_images || '',
-          terms_liability: row.terms_liability || '',
-          notes: row.notes || '',
-          created_at: row.created_at
-            ? new Date(row.created_at).toLocaleString('it-IT')
-            : ''
-        });
-      });
+      grouped[sportName].forEach((item) => sheet.addRow(item));
 
       sheet.getRow(1).font = { bold: true };
-      sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       sheet.views = [{ state: 'frozen', ySplit: 1 }];
-
-      sheet.eachRow((row, rowNumber) => {
-        row.alignment = { vertical: 'top', wrapText: true };
-        if (rowNumber > 1) {
-          row.height = 32;
-        }
-      });
     });
 
     if (Object.keys(grouped).length === 0) {
