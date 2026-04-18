@@ -174,34 +174,34 @@ app.get('/', async (req, res, next) => {
 app.post('/iscrizioni', async (req, res, next) => {
   try {
     const {
-      full_name,
-      birth_date,
-      phone,
-      email,
-      rione,
-      sport_id,
-      notes,
-      player1_full_name,
-      player1_tax_code,
-      player1_phone,
-      player1_rione_criteria,
-      player1_rione_address,
-      player1_shirt,
-      player2_full_name,
-      player2_tax_code,
-      player2_phone,
-      player2_rione_criteria,
-      player2_rione_address,
-      player2_shirt,
-      fee_confirmation,
-      terms_rione_check,
-      terms_organizer_confirmation,
-      terms_privacy,
-      terms_images,
-      terms_liability,
-      player1_shirt_size,
-      player2_shirt_size
-    } = req.body;
+  full_name,
+  birth_date,
+  phone,
+  email,
+  rione,
+  sport_id,
+  notes,
+  player1_full_name,
+  player1_tax_code,
+  player1_phone,
+  player1_rione_criteria,
+  player1_rione_address,
+  player1_shirt,
+  player1_shirt_size,
+  player2_full_name,
+  player2_tax_code,
+  player2_phone,
+  player2_rione_criteria,
+  player2_rione_address,
+  player2_shirt,
+  player2_shirt_size,
+  fee_confirmation,
+  terms_rione_check,
+  terms_organizer_confirmation,
+  terms_privacy,
+  terms_images,
+  terms_liability
+} = req.body;
 
     const errors = [];
     const settings = await getSettingsMap();
@@ -272,47 +272,52 @@ app.post('/iscrizioni', async (req, res, next) => {
     }
 
     await pool.query(
-      `INSERT INTO registrations (
-        full_name, birth_date, phone, email, rione, sport_id, notes,
-        player1_full_name, player1_tax_code, player1_phone, player1_rione_criteria, player1_rione_address, player1_shirt,
-        player2_full_name, player2_tax_code, player2_phone, player2_rione_criteria, player2_rione_address, player2_shirt,
-        fee_confirmation,
-        terms_rione_check, terms_organizer_confirmation, terms_privacy, terms_images, terms_liability
-      )
-      VALUES (
-        $1,$2,$3,$4,$5,$6,$7,
-        $8,$9,$10,$11,$12,$13,
-        $14,$15,$16,$17,$18,$19,
-        $20,
-        $21,$22,$23,$24,$25
-      )`,
+  `INSERT INTO registrations (
+    full_name, birth_date, phone, email, rione, sport_id, notes,
+    player1_full_name, player1_tax_code, player1_phone, player1_rione_criteria, player1_rione_address, player1_shirt, player1_shirt_size,
+    player2_full_name, player2_tax_code, player2_phone, player2_rione_criteria, player2_rione_address, player2_shirt, player2_shirt_size,
+    fee_confirmation,
+    terms_rione_check, terms_organizer_confirmation, terms_privacy, terms_images, terms_liability
+  )
+  VALUES (
+    $1,$2,$3,$4,$5,$6,$7,
+    $8,$9,$10,$11,$12,$13,$14,
+    $15,$16,$17,$18,$19,$20,$21,
+    $22,
+    $23,$24,$25,$26,$27
+  )`,
       [
-        player1_full_name?.trim() || full_name?.trim() || null,
-        birth_date || null,
-        player1_phone?.trim() || phone?.trim() || null,
-        email.trim(),
-        rione.trim(),
-        sport_id,
-        notes?.trim() || null,
-        player1_full_name?.trim() || null,
-        player1_tax_code?.trim() || null,
-        player1_phone?.trim() || null,
-        player1_rione_criteria?.trim() || null,
-        player1_rione_address?.trim() || null,
-        player1_shirt || null,
-        isPair ? (player2_full_name?.trim() || null) : null,
-        isPair ? (player2_tax_code?.trim() || null) : null,
-        isPair ? (player2_phone?.trim() || null) : null,
-        isPair ? (player2_rione_criteria?.trim() || null) : null,
-        isPair ? (player2_rione_address?.trim() || null) : null,
-        isPair ? (player2_shirt || null) : null,
-        fee_confirmation || null,
-        terms_rione_check || null,
-        terms_organizer_confirmation || null,
-        terms_privacy || null,
-        terms_images || null,
-        terms_liability || null
-      ]
+  player1_full_name?.trim() || full_name?.trim() || null,
+  birth_date || null,
+  player1_phone?.trim() || phone?.trim() || null,
+  email.trim(),
+  rione.trim(),
+  sport_id,
+  notes?.trim() || null,
+
+  player1_full_name?.trim() || null,
+  player1_tax_code?.trim() || null,
+  player1_phone?.trim() || null,
+  player1_rione_criteria?.trim() || null,
+  player1_rione_address?.trim() || null,
+  player1_shirt || null,
+  player1_shirt_size || null,
+
+  isPair ? (player2_full_name?.trim() || null) : null,
+  isPair ? (player2_tax_code?.trim() || null) : null,
+  isPair ? (player2_phone?.trim() || null) : null,
+  isPair ? (player2_rione_criteria?.trim() || null) : null,
+  isPair ? (player2_rione_address?.trim() || null) : null,
+  isPair ? (player2_shirt || null) : null,
+  isPair ? (player2_shirt_size || null) : null,
+
+  fee_confirmation || null,
+  terms_rione_check || null,
+  terms_organizer_confirmation || null,
+  terms_privacy || null,
+  terms_images || null,
+  terms_liability || null
+]
     );
 
     setFlash(req, 'success', 'Iscrizione inviata correttamente.');
