@@ -18,28 +18,32 @@
       <div>
         <div class="card" style="margin-bottom:20px;">
           <h3 style="margin-top:0;color:var(--green);">Impostazioni generali</h3>
-          <form method="post" action="/admin/settings/update">
-            <div style="margin-bottom:12px;">
-              <label>Iscrizioni aperte</label>
-              <select name="registrations_open">
-                <option value="true" <%= settings.registrations_open === 'true' ? 'selected' : '' %>>Aperte</option>
-                <option value="false" <%= settings.registrations_open !== 'true' ? 'selected' : '' %>>Chiuse</option>
-              </select>
-            </div>
-            <div style="margin-bottom:12px;">
-              <label>Telefono</label>
-              <input name="contact_phone" value="<%= settings.contact_phone || '' %>" />
-            </div>
-            <div style="margin-bottom:12px;">
-              <label>Email</label>
-              <input name="contact_email" value="<%= settings.contact_email || '' %>" />
-            </div>
-            <div style="margin-bottom:14px;">
-              <label>Sede</label>
-              <input name="contact_address" value="<%= settings.contact_address || '' %>" />
-            </div>
-            <button class="button button-yellow" type="submit">Salva impostazioni</button>
-          </form>
+        <form method="post" action="/admin/settings/update">
+  <div style="margin-bottom:12px;">
+    <label>Iscrizioni aperte</label>
+    <select name="registrations_open">
+      <option value="true" <%= settings.registrations_open === 'true' ? 'selected' : '' %>>Aperte</option>
+      <option value="false" <%= settings.registrations_open !== 'true' ? 'selected' : '' %>>Chiuse</option>
+    </select>
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <label>Email</label>
+    <input name="contact_email" value="<%= settings.contact_email || '' %>" />
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <label>Facebook</label>
+    <input name="contact_facebook" value="<%= settings.contact_facebook || 'Il Palio della Torre - Torneo dei Rioni Leverano' %>" />
+  </div>
+
+  <div style="margin-bottom:14px;">
+    <label>Instagram</label>
+    <input name="contact_instagram" value="<%= settings.contact_instagram || 'ilpaliodellatorreleverano' %>" />
+  </div>
+
+  <button class="button button-yellow" type="submit">Salva impostazioni</button>
+</form>
         </div>
 
         <div class="card" style="margin-bottom:20px;">
