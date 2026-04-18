@@ -18,7 +18,14 @@
     </div>
 
     <div class="card hero-card">
-      <div class="logo-circle">LOGO<br>PALIO</div>
+      <div class="logo-circle" style="padding:0; overflow:hidden; background:transparent;">
+        <img
+          src="/logo-pdt.png"
+          alt="Logo Palio"
+          style="width:100%; height:100%; object-fit:cover; border-radius:999px;"
+        />
+      </div>
+
       <div class="stats">
         <div class="stat">
           <strong><%= sports.length %></strong>
@@ -137,15 +144,15 @@
                 La maglia del proprio rione può essere acquistata a parte a € 5.
               </div>
 
-              <div class="radio-group" style="margin-top:12px;">
-                <label>
+              <div class="radio-row" style="margin-top:12px;">
+                <label class="radio-inline">
                   <input type="radio" name="fee_confirmation" value="yes" required>
-                  Sì
+                  <span>Sì</span>
                 </label>
 
-                <label>
+                <label class="radio-inline">
                   <input type="radio" name="fee_confirmation" value="no">
-                  No
+                  <span>No</span>
                 </label>
               </div>
             </div>
@@ -168,7 +175,7 @@
 
             <div>
               <label>Numero di telefono 1° giocatore *</label>
-              <input name="phone" value="<%= formData.phone || '' %>" required />
+              <input name="player1_phone" required />
             </div>
 
             <div>
@@ -188,18 +195,31 @@
             <input name="player1_rione_address" required />
           </div>
 
-          <div class="radio-group" style="margin-top:16px;">
+          <div class="radio-row" style="margin-top:16px;">
             <span style="font-weight:800;color:var(--green);">Vuoi acquistare la maglia del rione per il 1° giocatore? (+ € 5)</span>
 
-            <label>
+            <label class="radio-inline">
               <input type="radio" name="player1_shirt" value="yes" required>
-              Sì
+              <span>Sì</span>
             </label>
 
-            <label>
+            <label class="radio-inline">
               <input type="radio" name="player1_shirt" value="no">
-              No
+              <span>No</span>
             </label>
+          </div>
+
+          <div id="player1_size_wrap" style="margin-top:16px; display:none;">
+            <label>Taglia maglia 1° giocatore *</label>
+            <select name="player1_shirt_size" id="player1_shirt_size">
+              <option value="">Seleziona taglia</option>
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+            </select>
           </div>
         </div>
 
@@ -239,18 +259,31 @@
             <input name="player2_rione_address" id="player2_rione_address" />
           </div>
 
-          <div class="radio-group" style="margin-top:16px;">
+          <div class="radio-row" style="margin-top:16px;">
             <span style="font-weight:800;color:var(--green);">Vuoi acquistare la maglia del rione per il 2° giocatore? (+ € 5)</span>
 
-            <label>
+            <label class="radio-inline">
               <input type="radio" name="player2_shirt" value="yes">
-              Sì
+              <span>Sì</span>
             </label>
 
-            <label>
+            <label class="radio-inline">
               <input type="radio" name="player2_shirt" value="no">
-              No
+              <span>No</span>
             </label>
+          </div>
+
+          <div id="player2_size_wrap" style="margin-top:16px; display:none;">
+            <label>Taglia maglia 2° giocatore *</label>
+            <select name="player2_shirt_size" id="player2_shirt_size">
+              <option value="">Seleziona taglia</option>
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+            </select>
           </div>
         </div>
 
@@ -295,20 +328,13 @@
     </div>
 
     <div class="card">
-      <h3 style="margin-top:0;color:var(--green);">Sistema completo</h3>
-      <p>
-        Le iscrizioni vengono salvate in modo permanente sul database e sono sempre gestibili dal pannello admin.
+      <h3 style="margin-top:0;color:var(--green);">Come funziona</h3>
+      <p style="line-height:1.9; margin-bottom:0;">
+        <strong>1.</strong> Scegli il tuo sport.<br>
+        <strong>2.</strong> Inserisci i tuoi dati.<br>
+        <strong>3.</strong> Richiedi la maglietta del tuo rione.<br>
+        <strong>4.</strong> E il gioco è fatto.
       </p>
-
-      <ul style="padding-left:18px; line-height:1.9;">
-        <li>Iscrizioni online</li>
-        <li>Gestione sport e prezzi</li>
-        <li>Apertura e chiusura iscrizioni</li>
-        <li>Export Excel</li>
-        <li>Contatti modificabili</li>
-        <li>Sponsor dinamici</li>
-        <li>Regolamenti PDF cliccabili</li>
-      </ul>
     </div>
   </div>
 </section>
@@ -433,6 +459,16 @@
       document.getElementById('player2_rione_address')
     ];
 
+    const player1ShirtYes = document.querySelector('input[name="player1_shirt"][value="yes"]');
+    const player1ShirtNo = document.querySelector('input[name="player1_shirt"][value="no"]');
+    const player1SizeWrap = document.getElementById('player1_size_wrap');
+    const player1Size = document.getElementById('player1_shirt_size');
+
+    const player2ShirtYes = document.querySelector('input[name="player2_shirt"][value="yes"]');
+    const player2ShirtNo = document.querySelector('input[name="player2_shirt"][value="no"]');
+    const player2SizeWrap = document.getElementById('player2_size_wrap');
+    const player2Size = document.getElementById('player2_shirt_size');
+
     function updateSportUI() {
       const option = sportSelect.options[sportSelect.selectedIndex];
 
@@ -454,6 +490,30 @@
       } else {
         secondPlayerCard.style.display = 'none';
         secondPlayerFields.forEach(el => el && el.removeAttribute('required'));
+        if (player2SizeWrap) player2SizeWrap.style.display = 'none';
+        if (player2Size) player2Size.removeAttribute('required');
+      }
+    }
+
+    function updatePlayer1ShirtUI() {
+      if (player1ShirtYes && player1ShirtYes.checked) {
+        player1SizeWrap.style.display = 'block';
+        player1Size.setAttribute('required', 'required');
+      } else {
+        player1SizeWrap.style.display = 'none';
+        player1Size.removeAttribute('required');
+        player1Size.value = '';
+      }
+    }
+
+    function updatePlayer2ShirtUI() {
+      if (player2ShirtYes && player2ShirtYes.checked && secondPlayerCard.style.display !== 'none') {
+        player2SizeWrap.style.display = 'block';
+        player2Size.setAttribute('required', 'required');
+      } else {
+        player2SizeWrap.style.display = 'none';
+        player2Size.removeAttribute('required');
+        player2Size.value = '';
       }
     }
 
@@ -461,6 +521,15 @@
       sportSelect.addEventListener('change', updateSportUI);
       updateSportUI();
     }
+
+    if (player1ShirtYes) player1ShirtYes.addEventListener('change', updatePlayer1ShirtUI);
+    if (player1ShirtNo) player1ShirtNo.addEventListener('change', updatePlayer1ShirtUI);
+
+    if (player2ShirtYes) player2ShirtYes.addEventListener('change', updatePlayer2ShirtUI);
+    if (player2ShirtNo) player2ShirtNo.addEventListener('change', updatePlayer2ShirtUI);
+
+    updatePlayer1ShirtUI();
+    updatePlayer2ShirtUI();
   })();
 </script>
 
