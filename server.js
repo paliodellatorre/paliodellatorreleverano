@@ -142,13 +142,8 @@ app.use((req, res, next) => {
     return next();
   }
 
-  if (req.session.regolamentoAccettato) {
-    return next();
-  }
-
   return res.redirect('/ingresso');
 });
-
 app.use((req, res, next) => {
   const allowedPaths = [
     '/ingresso',
@@ -211,17 +206,16 @@ app.get('/ingresso', async (req, res, next) => {
 });
 
 app.post('/ingresso/continua', (req, res) => {
-  const { regolamento_ok, dichiaro_rione_ok } = req.body;
+  const { regolamento_ok } = req.body;
 
-  if (regolamento_ok !== 'yes' || dichiaro_rione_ok !== 'yes') {
+  if (regolamento_ok !== 'yes') {
     req.session.flash = {
       type: 'error',
-      message: 'Devi leggere il regolamento e confermare entrambe le dichiarazioni.'
+      message: 'Devi leggere il regolamento prima di proseguire.'
     };
     return res.redirect('/ingresso');
   }
 
-  req.session.regolamentoAccettato = true;
   res.redirect('/');
 });
 
