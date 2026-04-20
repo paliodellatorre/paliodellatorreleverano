@@ -216,7 +216,7 @@ app.post('/ingresso/continua', (req, res) => {
     return res.redirect('/ingresso');
   }
 
-  res.redirect('/');
+  return res.redirect('/');
 });
 
 /* HOME */
