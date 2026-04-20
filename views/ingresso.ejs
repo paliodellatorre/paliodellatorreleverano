@@ -1,0 +1,45 @@
+<%- include('partials/header') %>
+
+<section class="section">
+  <div class="container" style="max-width:900px;">
+
+    <div class="section-title" style="text-align:center;">
+      <small>Accesso al sito</small>
+      <h2>Regolamento</h2>
+    </div>
+
+    <div class="card" style="white-space:pre-line; line-height:1.8; font-size:16px;">
+
+<%= settings.site_regolamento_accesso || `REGOLAMENTO GENERALE
+
+Prima di proseguire è necessario leggere attentamente il regolamento del Palio della Torre Leverano.
+
+La partecipazione alle attività del Palio comporta l'accettazione delle regole organizzative, delle modalità di iscrizione e delle disposizioni stabilite dagli organizzatori.
+
+Tutti i partecipanti sono tenuti a rispettare i principi di correttezza sportiva, rispetto reciproco e fair play.
+
+Per continuare è necessario dichiarare di aver preso visione del regolamento.` %>
+
+    </div>
+
+    <form method="POST" action="/ingresso/continua" class="card" style="margin-top:20px;">
+
+      <label class="checkbox">
+        <input type="checkbox" name="regolamento_ok" value="yes" required />
+        Ho preso visione del regolamento e accetto le condizioni di partecipazione.
+      </label>
+
+      <div style="margin-top:18px;">
+        <button class="button button-yellow" type="submit">
+          Prosegui
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+
+<%- include('partials/footer') %>
