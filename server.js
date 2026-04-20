@@ -142,6 +142,11 @@ app.use((req, res, next) => {
     return next();
   }
 
+  if (req.session.canEnterSiteOnce) {
+    req.session.canEnterSiteOnce = false;
+    return next();
+  }
+
   return res.redirect('/ingresso');
 });
 app.use((req, res, next) => {
@@ -216,6 +221,7 @@ app.post('/ingresso/continua', (req, res) => {
     return res.redirect('/ingresso');
   }
 
+  req.session.canEnterSiteOnce = true;
   return res.redirect('/');
 });
 
