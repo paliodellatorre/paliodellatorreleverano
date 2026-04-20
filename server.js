@@ -183,12 +183,12 @@ app.get('/ingresso', async (req, res, next) => {
 });
 
 app.post('/ingresso/continua', (req, res) => {
-  const { regolamento_ok } = req.body;
+  const { regolamento_ok, dichiaro_rione_ok } = req.body;
 
-  if (regolamento_ok !== 'yes') {
+  if (regolamento_ok !== 'yes' || dichiaro_rione_ok !== 'yes') {
     req.session.flash = {
       type: 'error',
-      message: 'Devi dichiarare di aver preso visione del regolamento.'
+      message: 'Devi leggere il regolamento e confermare entrambe le dichiarazioni.'
     };
     return res.redirect('/ingresso');
   }
