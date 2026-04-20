@@ -152,32 +152,32 @@ Le decisioni dellâ€™organizzazione del Palio della Torre Leverano in merito allâ
     function updateButtonState() {
       const ready =
         scrolledToBottom &&
-        regolamentoOk.checked &&
-        dichiaroRioneOk.checked;
+        regolamentoOk.checked;
 
       proseguiBtn.disabled = !ready;
     }
 
-    function unlockChecksIfScrolled() {
-      const nearBottom =
-  regolamentoBox.scrollTop + regolamentoBox.clientHeight >= regolamentoBox.scrollHeight - 50;
+    regolamentoBox.addEventListener('scroll', function () {
 
-      if (nearBottom && !scrolledToBottom) {
+      const nearBottom =
+        regolamentoBox.scrollTop + regolamentoBox.clientHeight >= regolamentoBox.scrollHeight - 50;
+
+      if (nearBottom) {
         scrolledToBottom = true;
+
         regolamentoOk.disabled = false;
-        dichiaroRioneOk.disabled = false;
-        scrollMessage.textContent = 'Hai raggiunto la fine del regolamento. Ora puoi confermare e proseguire.';
+
+        scrollMessage.textContent =
+          'Hai raggiunto la fine del regolamento. Ora puoi confermare e proseguire.';
+
         scrollMessage.style.color = '#065f46';
       }
 
       updateButtonState();
-    }
+    });
 
-    regolamentoBox.addEventListener('scroll', unlockChecksIfScrolled);
     regolamentoOk.addEventListener('change', updateButtonState);
-    dichiaroRioneOk.addEventListener('change', updateButtonState);
 
-    unlockChecksIfScrolled();
   })();
 </script>
 
