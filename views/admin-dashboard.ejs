@@ -42,6 +42,17 @@
     <input name="contact_instagram" value="<%= settings.contact_instagram || 'ilpaliodellatorreleverano' %>" />
   </div>
 
+<div style="margin-bottom:14px;">
+  <label>Regolamento iniziale accesso sito</label>
+
+  <textarea
+    name="site_regolamento_accesso"
+    rows="10"
+    placeholder="Scrivi qui il regolamento che deve apparire prima dell'accesso al sito"
+  ><%= settings.site_regolamento_accesso || '' %></textarea>
+
+</div>
+
   <button class="button button-yellow" type="submit">Salva impostazioni</button>
 </form>
         </div>
