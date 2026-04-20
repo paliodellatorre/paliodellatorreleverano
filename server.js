@@ -121,6 +121,34 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use((req, res, next) => {
+  const allowedPaths = [
+    '/ingresso',
+    '/ingresso/continua',
+    '/admin',
+    '/admin/login',
+    '/admin/logout'
+  ];
+
+  const isStatic =
+    req.path.startsWith('/styles.css') ||
+    req.path.startsWith('/logo-pdt.png') ||
+    req.path.startsWith('/favicon') ||
+    req.path.startsWith('/public/');
+
+  const isAdmin = req.path.startsWith('/admin');
+
+  if (isStatic || isAdmin || allowedPaths.includes(req.path)) {
+    return next();
+  }
+
+  if (req.session.regolamentoAccettato) {
+    return next();
+  }
+
+  return res.redirect('/ingresso');
+});
+
 function setFlash(req, type, message) {
   req.session.flash = { type, message };
 }
@@ -140,6 +168,34 @@ async function getSettingsMap() {
     return acc;
   }, {});
 }
+
+app.get('/ingresso', async (req, res, next) => {
+  try {
+    const settings = await getSettingsMap();
+
+    res.render('ingresso', {
+      title: 'Regolamento di accesso',
+      settings
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/ingresso/continua', (req, res) => {
+  const { regolamento_ok } = req.body;
+
+  if (regolamento_ok !== 'yes') {
+    req.session.flash = {
+      type: 'error',
+      message: 'Devi dichiarare di aver preso visione del regolamento.'
+    };
+    return res.redirect('/ingresso');
+  }
+
+  req.session.regolamentoAccettato = true;
+  res.redirect('/');
+});
 
 /* HOME */
 app.get('/', async (req, res, next) => {
@@ -495,7 +551,8 @@ app.post('/admin/settings/update', requireAuth, async (req, res, next) => {
   registrations_open: req.body.registrations_open === 'true' ? 'true' : 'false',
   contact_email: req.body.contact_email || '',
   contact_facebook: req.body.contact_facebook || '',
-  contact_instagram: req.body.contact_instagram || ''
+  contact_instagram: req.body.contact_instagram || '',
+  site_regolamento_accesso: req.body.site_regolamento_accesso || ''
 };
 
     for (const [key, value] of Object.entries(payload)) {
