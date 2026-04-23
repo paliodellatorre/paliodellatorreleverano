@@ -149,34 +149,6 @@ app.use((req, res, next) => {
   return res.redirect('/ingresso');
 });
 
-app.use((req, res, next) => {
-  const allowedPaths = [
-    '/ingresso',
-    '/ingresso/continua',
-    '/admin',
-    '/admin/login',
-    '/admin/logout'
-  ];
-
-  const isStatic =
-    req.path.startsWith('/styles.css') ||
-    req.path.startsWith('/logo-pdt.png') ||
-    req.path.startsWith('/favicon') ||
-    req.path.startsWith('/public/');
-
-  const isAdmin = req.path.startsWith('/admin');
-
-  if (isStatic || isAdmin || allowedPaths.includes(req.path)) {
-    return next();
-  }
-
-  if (req.session.regolamentoAccettato) {
-    return next();
-  }
-
-  return res.redirect('/ingresso');
-});
-
 function setFlash(req, type, message) {
   req.session.flash = { type, message };
 }
