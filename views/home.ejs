@@ -604,8 +604,6 @@
   justify-content: center;
   z-index: 9999;
 ">
-
-  <!-- X chiusura -->
   <button
     onclick="chiudiVideo()"
     style="
@@ -638,7 +636,6 @@
   >
     <source src="<%= media.homepage_video_url %>" type="video/mp4">
   </video>
-
 </div>
 
 <script>
@@ -658,11 +655,9 @@
     }
   }
 
-  // RIAPRE SEMPRE OGNI 30 SECONDI
   setInterval(function () {
     apriVideo();
   }, 30000);
-
 </script>
 
 <% } %>
