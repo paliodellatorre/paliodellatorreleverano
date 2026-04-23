@@ -964,6 +964,19 @@ app.post('/admin/media/video', requireAuth, upload.single('video'), async (req, 
   }
 });
 
+app.post('/admin/media/video/delete', requireAuth, async (req, res, next) => {
+  try {
+    await pool.query(
+      `DELETE FROM site_media WHERE key = 'homepage_video_url'`
+    );
+
+    setFlash(req, 'success', 'Video pubblicitario eliminato.');
+    res.redirect('/admin');
+  } catch (err) {
+    next(err);
+  }
+});
+
 /* ERROR HANDLER */
 app.use((err, req, res, next) => {
   console.error(err);
