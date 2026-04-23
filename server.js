@@ -229,6 +229,7 @@ app.get('/', async (req, res, next) => {
     const news = await pool.query(
       'SELECT * FROM news ORDER BY created_at DESC, id DESC'
     );
+    console.log('NEWS IN HOME:', news.rows);
     const mediaRows = await pool.query(
       'SELECT key, value FROM site_media'
     );
@@ -906,7 +907,9 @@ app.post('/admin/news/create', requireAuth, upload.single('image'), async (req, 
       'INSERT INTO news (titolo, image_url) VALUES ($1, $2)',
       [req.body.titolo || '', result.secure_url]
     );
-
+    
+console.log('LOCANDINA SALVATA IN NEWS:', req.body.titolo || '', result.secure_url);
+    
     setFlash(req, 'success', 'Locandina caricata con successo.');
     res.redirect('/admin');
   } catch (err) {
