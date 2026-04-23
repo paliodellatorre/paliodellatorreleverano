@@ -85,6 +85,15 @@ async function runSchema() {
     ALTER TABLE regolamenti
     ADD COLUMN IF NOT EXISTS file_url TEXT
   `);
+
+    await pool.query(`
+    CREATE TABLE IF NOT EXISTS news (
+      id SERIAL PRIMARY KEY,
+      titolo TEXT,
+      image_url TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 }
 
 app.set('view engine', 'ejs');
