@@ -46,6 +46,14 @@ async function runSchema() {
     await pool.query(schema);
   } else {
     console.warn('db/schema.sql non trovato, avvio senza esecuzione schema.');
+      await pool.query(`
+    CREATE TABLE IF NOT EXISTS site_media (
+      id SERIAL PRIMARY KEY,
+      key TEXT UNIQUE NOT NULL,
+      value TEXT,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
   }
 
   await pool.query(`
@@ -220,7 +228,15 @@ app.get('/', async (req, res, next) => {
 const news = await pool.query(
   'SELECT * FROM news ORDER BY created_at DESC, id DESC'
 );
+const mediaRows = await pool.query(
+  'SELECT key, value FROM site_media'
+);
 const settings = await getSettingsMap();
+
+const media = mediaRows.rows.reduce((acc, row) => {
+  acc[row.key] = row.value;
+  return acc;
+}, {});
 
     res.render('home', {
   title: 'Palio della Torre',
@@ -228,6 +244,7 @@ const settings = await getSettingsMap();
   sponsors: sponsors.rows,
   regulations: regulations.rows,
   news: news.rows,
+  media,
   settings,
   rioni: RIONI,
   formData: {},
@@ -438,6 +455,11 @@ app.get('/admin', requireAuth, async (req, res, next) => {
     const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY id DESC');
     const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
 const news = await pool.query('SELECT * FROM news ORDER BY created_at DESC, id DESC');
+    const mediaRows = await pool.query('SELECT key, value FROM site_media');
+const media = mediaRows.rows.reduce((acc, row) => {
+  acc[row.key] = row.value;
+  return acc;
+}, {});
 const settings = await getSettingsMap();
 
     res.render('admin-dashboard', {
@@ -447,6 +469,7 @@ const settings = await getSettingsMap();
   sponsors: sponsors.rows,
   regulations: regulations.rows,
   news: news.rows,
+  media,
   settings,
   editItem: null
 });
@@ -468,6 +491,11 @@ app.get('/admin/registrations/:id/edit', requireAuth, async (req, res, next) => 
     const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY id DESC');
    const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
 const news = await pool.query('SELECT * FROM news ORDER BY created_at DESC, id DESC');
+    const mediaRows = await pool.query('SELECT key, value FROM site_media');
+const media = mediaRows.rows.reduce((acc, row) => {
+  acc[row.key] = row.value;
+  return acc;
+}, {});
 const settings = await getSettingsMap();
     const editItem = await pool.query(
       'SELECT * FROM registrations WHERE id = $1',
@@ -486,6 +514,7 @@ const settings = await getSettingsMap();
       sponsors: sponsors.rows,
       regulations: regulations.rows,
       news: news.rows,
+      media,
       settings,
       editItem: editItem.rows[0]
     });
@@ -888,6 +917,43 @@ app.post('/admin/news/:id/delete', requireAuth, async (req, res, next) => {
   try {
     await pool.query('DELETE FROM news WHERE id = $1', [req.params.id]);
     setFlash(req, 'success', 'Locandina eliminata.');
+    res.redirect('/admin');
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/admin/media/video', requireAuth, upload.single('video'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      setFlash(req, 'error', 'Seleziona un video.');
+      return res.redirect('/admin');
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'palio/video',
+          resource_type: 'video',
+          use_filename: true,
+          unique_filename: true
+        },
+        (error, uploaded) => {
+          if (error) return reject(error);
+          resolve(uploaded);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
+
+    await pool.query(
+      `INSERT INTO site_media (key, value, updated_at)
+       VALUES ('homepage_video_url', $1, NOW())
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+      [result.secure_url]
+    );
+
+    setFlash(req, 'success', 'Video caricato con successo.');
     res.redirect('/admin');
   } catch (err) {
     next(err);
