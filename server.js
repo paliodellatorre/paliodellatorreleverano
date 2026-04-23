@@ -222,34 +222,34 @@ app.get('/', async (req, res, next) => {
     const sponsors = await pool.query(
       'SELECT * FROM sponsors ORDER BY id DESC'
     );
-   const regulations = await pool.query(
-  'SELECT * FROM regolamenti ORDER BY id DESC'
-);
-const news = await pool.query(
-  'SELECT * FROM news ORDER BY created_at DESC, id DESC'
-);
-const mediaRows = await pool.query(
-  'SELECT key, value FROM site_media'
-);
-const settings = await getSettingsMap();
+    const regulations = await pool.query(
+      'SELECT * FROM regolamenti ORDER BY id DESC'
+    );
+    const news = await pool.query(
+      'SELECT * FROM news ORDER BY created_at DESC, id DESC'
+    );
+    const mediaRows = await pool.query(
+      'SELECT key, value FROM site_media'
+    );
+    const settings = await getSettingsMap();
 
-const media = mediaRows.rows.reduce((acc, row) => {
-  acc[row.key] = row.value;
-  return acc;
-}, {});
+    const media = mediaRows.rows.reduce((acc, row) => {
+      acc[row.key] = row.value;
+      return acc;
+    }, {});
 
     res.render('home', {
-  title: 'Palio della Torre',
-  sports: sports.rows,
-  sponsors: sponsors.rows,
-  regulations: regulations.rows,
-  news: news.rows,
-  media,
-  settings,
-  rioni: RIONI,
-  formData: {},
-  errors: []
-});
+      title: 'Palio della Torre',
+      sports: sports.rows,
+      sponsors: sponsors.rows,
+      regulations: regulations.rows,
+      news: news.rows,
+      media,
+      settings,
+      rioni: RIONI,
+      formData: {},
+      errors: []
+    });
   } catch (err) {
     next(err);
   }
