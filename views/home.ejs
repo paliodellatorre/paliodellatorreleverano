@@ -594,4 +594,66 @@ Il Palio della Torre si svolge con il patrocinio del Comune di Leverano, a testi
   })();
 </script>
 
+<% if (media && media.homepage_video_url) { %>
+  <div
+    id="videoOverlay"
+    style="
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.85);
+      z-index:9999;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    "
+  >
+    <div style="width:min(900px, 100%);">
+      <video
+        id="promoVideo"
+        style="width:100%; max-height:80vh; border-radius:20px; background:#000;"
+        playsinline
+        muted
+        autoplay
+      >
+        <source src="<%= media.homepage_video_url %>" type="video/mp4">
+      </video>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      if (window.location.pathname.startsWith('/admin')) return;
+
+      const overlay = document.getElementById('videoOverlay');
+      const video = document.getElementById('promoVideo');
+      if (!overlay || !video) return;
+
+      function showVideo() {
+        overlay.style.display = 'flex';
+
+        try {
+          video.currentTime = 0;
+          const p = video.play();
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        } catch (e) {}
+
+        setTimeout(() => {
+          overlay.style.display = 'none';
+          try {
+            video.pause();
+            video.currentTime = 0;
+          } catch (e) {}
+        }, 8000);
+      }
+
+      setTimeout(showVideo, 300);
+
+      setInterval(() => {
+        showVideo();
+      }, 30000);
+    })();
+  </script>
+<% } %>
+
 <%- include('partials/footer') %>
