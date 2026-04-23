@@ -142,13 +142,13 @@ app.use((req, res, next) => {
     return next();
   }
 
-  if (req.session.canEnterSiteOnce) {
-    req.session.canEnterSiteOnce = false;
+  if (req.query.ok === '1') {
     return next();
   }
 
   return res.redirect('/ingresso');
 });
+
 app.use((req, res, next) => {
   const allowedPaths = [
     '/ingresso',
@@ -221,8 +221,7 @@ app.post('/ingresso/continua', (req, res) => {
     return res.redirect('/ingresso');
   }
 
-  req.session.canEnterSiteOnce = true;
-  return res.redirect('/');
+  return res.redirect('/?ok=1');
 });
 
 /* HOME */
