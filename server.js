@@ -848,6 +848,52 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
   }
 });
 
+app.post('/admin/news/create', requireAuth, upload.single('image'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      setFlash(req, 'error', 'Seleziona una locandina.');
+      return res.redirect('/admin');
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'palio/news',
+          resource_type: 'image',
+          use_filename: true,
+          unique_filename: true,
+          allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
+        },
+        (error, uploaded) => {
+          if (error) return reject(error);
+          resolve(uploaded);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
+
+    await pool.query(
+      'INSERT INTO news (titolo, image_url) VALUES ($1, $2)',
+      [req.body.titolo || '', result.secure_url]
+    );
+
+    setFlash(req, 'success', 'Locandina caricata con successo.');
+    res.redirect('/admin');
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/admin/news/:id/delete', requireAuth, async (req, res, next) => {
+  try {
+    await pool.query('DELETE FROM news WHERE id = $1', [req.params.id]);
+    setFlash(req, 'success', 'Locandina eliminata.');
+    res.redirect('/admin');
+  } catch (err) {
+    next(err);
+  }
+});
+
 /* ERROR HANDLER */
 app.use((err, req, res, next) => {
   console.error(err);
