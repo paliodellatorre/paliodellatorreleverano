@@ -214,21 +214,25 @@ app.get('/', async (req, res, next) => {
     const sponsors = await pool.query(
       'SELECT * FROM sponsors ORDER BY id DESC'
     );
-    const regulations = await pool.query(
-      'SELECT * FROM regolamenti ORDER BY id DESC'
-    );
-    const settings = await getSettingsMap();
+   const regulations = await pool.query(
+  'SELECT * FROM regolamenti ORDER BY id DESC'
+);
+const news = await pool.query(
+  'SELECT * FROM news ORDER BY created_at DESC, id DESC'
+);
+const settings = await getSettingsMap();
 
     res.render('home', {
-      title: 'Palio della Torre',
-      sports: sports.rows,
-      sponsors: sponsors.rows,
-      regulations: regulations.rows,
-      settings,
-      rioni: RIONI,
-      formData: {},
-      errors: []
-    });
+  title: 'Palio della Torre',
+  sports: sports.rows,
+  sponsors: sponsors.rows,
+  regulations: regulations.rows,
+  news: news.rows,
+  settings,
+  rioni: RIONI,
+  formData: {},
+  errors: []
+});
   } catch (err) {
     next(err);
   }
@@ -433,17 +437,19 @@ app.get('/admin', requireAuth, async (req, res, next) => {
     const sports = await pool.query('SELECT * FROM sports ORDER BY name');
     const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY id DESC');
     const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
-    const settings = await getSettingsMap();
+const news = await pool.query('SELECT * FROM news ORDER BY created_at DESC, id DESC');
+const settings = await getSettingsMap();
 
     res.render('admin-dashboard', {
-      title: 'Pannello Admin',
-      registrations: registrations.rows,
-      sports: sports.rows,
-      sponsors: sponsors.rows,
-      regulations: regulations.rows,
-      settings,
-      editItem: null
-    });
+  title: 'Pannello Admin',
+  registrations: registrations.rows,
+  sports: sports.rows,
+  sponsors: sponsors.rows,
+  regulations: regulations.rows,
+  news: news.rows,
+  settings,
+  editItem: null
+});
   } catch (err) {
     next(err);
   }
@@ -460,8 +466,9 @@ app.get('/admin/registrations/:id/edit', requireAuth, async (req, res, next) => 
     `);
     const sports = await pool.query('SELECT * FROM sports ORDER BY name');
     const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY id DESC');
-    const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
-    const settings = await getSettingsMap();
+   const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
+const news = await pool.query('SELECT * FROM news ORDER BY created_at DESC, id DESC');
+const settings = await getSettingsMap();
     const editItem = await pool.query(
       'SELECT * FROM registrations WHERE id = $1',
       [req.params.id]
@@ -478,6 +485,7 @@ app.get('/admin/registrations/:id/edit', requireAuth, async (req, res, next) => 
       sports: sports.rows,
       sponsors: sponsors.rows,
       regulations: regulations.rows,
+      news: news.rows,
       settings,
       editItem: editItem.rows[0]
     });
