@@ -87,6 +87,37 @@
   <% } %>
 </div>
 
+<div class="card" style="margin-bottom:20px;">
+  <h3 style="margin-top:0;color:var(--green);">Video homepage</h3>
+
+  <form method="post" action="/admin/media/video" enctype="multipart/form-data">
+
+    <div style="margin-bottom:14px;">
+      <label>Video pubblicitario</label>
+      <input
+        type="file"
+        name="video"
+        accept="video/mp4,video/webm,video/quicktime"
+        required
+      />
+    </div>
+
+    <button class="button button-yellow" type="submit">
+      Carica video
+    </button>
+
+  </form>
+
+  <% if (media && media.homepage_video_url) { %>
+
+    <div style="margin-top:16px;" class="small">
+      Video attuale caricato correttamente.
+    </div>
+
+  <% } %>
+
+</div>
+
 <div style="margin-bottom:14px;">
   <label>Regolamento iniziale accesso sito</label>
 
