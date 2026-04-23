@@ -46,8 +46,8 @@
       <small>Storia del torneo</small>
       <h2>Storia del torneo dei rioni</h2>
       <p style="font-weight:900; font-size:22px; color:var(--green); letter-spacing:1px;">
-  #DIVIDEREPERUNIRE
-</p>
+        #DIVIDEREPERUNIRE
+      </p>
     </div>
 
     <div class="grid-3">
@@ -63,7 +63,10 @@
     </div>
   </div>
 </section>
-<div class="card">
+
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="card">
       <h3 style="margin-top:0;color:var(--green);">Come funziona</h3>
       <p style="line-height:1.9; margin-bottom:0;">
         <strong>1.</strong> Scegli il tuo sport.<br>
@@ -72,6 +75,8 @@
         <strong>4.</strong> E il gioco è fatto.
       </p>
     </div>
+  </div>
+</section>
 
 <section id="iscrizioni" class="section">
   <div class="container two-col">
@@ -176,14 +181,10 @@
               <input name="player1_full_name" required />
             </div>
 
-<div>
-  <label>Data di nascita 1° giocatore *</label>
-  <input
-    type="date"
-    name="player1_birth_date"
-    required
-  />
-</div>
+            <div>
+              <label>Data di nascita 1° giocatore *</label>
+              <input type="date" name="player1_birth_date" required />
+            </div>
 
             <div>
               <label>Codice fiscale 1° giocatore *</label>
@@ -249,13 +250,10 @@
               <input name="player2_full_name" id="player2_full_name" />
             </div>
 
-<div>
-  <label>Data di nascita 2° giocatore *</label>
-  <input
-    type="date"
-    name="player2_birth_date"
-  />
-</div>
+            <div>
+              <label>Data di nascita 2° giocatore *</label>
+              <input type="date" name="player2_birth_date" />
+            </div>
 
             <div>
               <label>Codice fiscale 2° giocatore *</label>
@@ -361,6 +359,23 @@
       <h2>Regolamenti</h2>
     </div>
 
+    <div class="grid-4">
+      <% if (regulations && regulations.length) { %>
+        <% regulations.forEach(function(reg) { %>
+          <a href="<%= reg.file_url %>" target="_blank" class="card">
+            <strong><%= reg.titolo %></strong>
+          </a>
+        <% }) %>
+      <% } else { %>
+        <div class="card">Regolamento generale</div>
+        <div class="card">Regolamento Padel</div>
+        <div class="card">Regolamento Calcio</div>
+        <div class="card">Privacy e trattamento dati</div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
 <section id="novita" class="section">
   <div class="container">
     <div class="section-title">
@@ -392,23 +407,6 @@
   </div>
 </section>
 
-    <div class="grid-4">
-      <% if (regulations && regulations.length) { %>
-        <% regulations.forEach(function(reg) { %>
-          <a href="<%= reg.file_url %>" target="_blank" class="card">
-            <strong><%= reg.titolo %></strong>
-          </a>
-        <% }) %>
-      <% } else { %>
-        <div class="card">Regolamento generale</div>
-        <div class="card">Regolamento Padel</div>
-        <div class="card">Regolamento Calcio</div>
-        <div class="card">Privacy e trattamento dati</div>
-      <% } %>
-    </div>
-  </div>
-</section>
-
 <section id="chi-siamo" class="section">
   <div class="container">
     <div class="section-title">
@@ -417,10 +415,10 @@
     </div>
 
     <div class="card">
-     Il Palio della Torre di Leverano è una manifestazione sportiva e comunitaria che coinvolge i rioni del paese in sfide sportive e momenti di aggregazione, promuovendo lo spirito di squadra, il fair play e il senso di appartenenza al territorio.
-Nato nel 2021, il Palio è cresciuto anno dopo anno diventando un appuntamento atteso da tutta la comunità, capace di unire giovani, famiglie e associazioni in un clima di festa e sana competizione.
-La manifestazione rappresenta un'occasione unica per valorizzare lo sport, rafforzare i legami tra i cittadini e celebrare le tradizioni locali, trasformando ogni edizione in un momento di condivisione e partecipazione collettiva.
-Il Palio della Torre si svolge con il patrocinio del Comune di Leverano, a testimonianza dell'importanza dell'evento per la comunità e per la promozione dei valori sportivi e sociali.
+      Il Palio della Torre di Leverano è una manifestazione sportiva e comunitaria che coinvolge i rioni del paese in sfide sportive e momenti di aggregazione, promuovendo lo spirito di squadra, il fair play e il senso di appartenenza al territorio.
+      Nato nel 2021, il Palio è cresciuto anno dopo anno diventando un appuntamento atteso da tutta la comunità, capace di unire giovani, famiglie e associazioni in un clima di festa e sana competizione.
+      La manifestazione rappresenta un'occasione unica per valorizzare lo sport, rafforzare i legami tra i cittadini e celebrare le tradizioni locali, trasformando ogni edizione in un momento di condivisione e partecipazione collettiva.
+      Il Palio della Torre si svolge con il patrocinio del Comune di Leverano, a testimonianza dell'importanza dell'evento per la comunità e per la promozione dei valori sportivi e sociali.
     </div>
   </div>
 </section>
@@ -435,44 +433,42 @@ Il Palio della Torre si svolge con il patrocinio del Comune di Leverano, a testi
       </p>
     </div>
 
-  <div class="grid-3">
+    <div class="grid-3">
+      <div class="card">
+        <strong>Facebook</strong>
+        <div style="margin-top:10px;">
+          <a
+            href="https://www.facebook.com/share/16jGEvJ7pg/?mibextid=wwXIfr"
+            target="_blank"
+            rel="noopener noreferrer"
+            style="font-weight:700; text-decoration:none; color:inherit;"
+          >
+            Il Palio della Torre - Torneo dei Rioni Leverano
+          </a>
+        </div>
+      </div>
 
-  <div class="card">
-    <strong>Facebook</strong>
-    <div style="margin-top:10px;">
-      <a
-        href="https://www.facebook.com/share/16jGEvJ7pg/?mibextid=wwXIfr"
-        target="_blank"
-        rel="noopener noreferrer"
-        style="font-weight:700; text-decoration:none; color:inherit;"
-      >
-        Il Palio della Torre - Torneo dei Rioni Leverano
-      </a>
+      <div class="card">
+        <strong>Instagram</strong>
+        <div style="margin-top:10px;">
+          <a
+            href="https://www.instagram.com/ilpaliodellatorreleverano?igsh=MTRrNjlrbDhwbDc3MA=="
+            target="_blank"
+            rel="noopener noreferrer"
+            style="font-weight:700; text-decoration:none; color:inherit;"
+          >
+            ilpaliodellatorreleverano
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <strong>Email</strong>
+        <div style="margin-top:10px;">
+          <%= settings.contact_email || '---' %>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <div class="card">
-    <strong>Instagram</strong>
-    <div style="margin-top:10px;">
-      <a
-        href="https://www.instagram.com/ilpaliodellatorreleverano?igsh=MTRrNjlrbDhwbDc3MA=="
-        target="_blank"
-        rel="noopener noreferrer"
-        style="font-weight:700; text-decoration:none; color:inherit;"
-      >
-        ilpaliodellatorreleverano
-      </a>
-    </div>
-  </div>
-
-  <div class="card">
-    <strong>Email</strong>
-    <div style="margin-top:10px;">
-      <%= settings.contact_email || '---' %>
-    </div>
-  </div>
-
-</div>
   </div>
 </section>
 
