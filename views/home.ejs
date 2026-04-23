@@ -590,66 +590,82 @@
   })();
 </script>
 
-<% if (media && media.homepage_video_url) { %>
-  <div
-    id="videoOverlay"
+<% if (media && media.homepage_video_url && !isAdmin) { %>
+
+<div id="videoPopup" style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+">
+
+  <!-- X chiusura -->
+  <button
+    onclick="chiudiVideo()"
     style="
-      display:none;
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.85);
-      z-index:9999;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 22px;
+      cursor: pointer;
+      font-weight: bold;
     "
   >
-    <div style="width:min(900px, 100%);">
-      <video
-        id="promoVideo"
-        style="width:100%; max-height:80vh; border-radius:20px; background:#000;"
-        playsinline
-        muted
-        autoplay
-      >
-        <source src="<%= media.homepage_video_url %>" type="video/mp4">
-      </video>
-    </div>
-  </div>
+    ✕
+  </button>
 
-  <script>
-    (function () {
-      if (window.location.pathname.startsWith('/admin')) return;
+  <video
+    id="videoAdv"
+    autoplay
+    muted
+    playsinline
+    style="
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 12px;
+    "
+  >
+    <source src="<%= media.homepage_video_url %>" type="video/mp4">
+  </video>
 
-      const overlay = document.getElementById('videoOverlay');
-      const video = document.getElementById('promoVideo');
-      if (!overlay || !video) return;
+</div>
 
-      function showVideo() {
-        overlay.style.display = 'flex';
+<script>
+  function chiudiVideo() {
+    document.getElementById("videoPopup").style.display = "none";
+  }
 
-        try {
-          video.currentTime = 0;
-          const p = video.play();
-          if (p && typeof p.catch === 'function') p.catch(() => {});
-        } catch (e) {}
+  function apriVideo() {
+    const popup = document.getElementById("videoPopup");
+    const video = document.getElementById("videoAdv");
 
-        setTimeout(() => {
-          overlay.style.display = 'none';
-          try {
-            video.pause();
-            video.currentTime = 0;
-          } catch (e) {}
-        }, 8000);
-      }
+    popup.style.display = "flex";
 
-      setTimeout(showVideo, 300);
+    if (video) {
+      video.currentTime = 0;
+      video.play();
+    }
+  }
 
-      setInterval(() => {
-        showVideo();
-      }, 30000);
-    })();
-  </script>
+  // RIAPRE SEMPRE OGNI 30 SECONDI
+  setInterval(function () {
+    apriVideo();
+  }, 30000);
+
+</script>
+
+<% } %>
 <% } %>
 
 <%- include('partials/footer') %>
