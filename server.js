@@ -42,66 +42,67 @@ async function runSchema() {
   const schemaPath = path.join(__dirname, 'db', 'schema.sql');
 
   if (fs.existsSync(schemaPath)) {
-    const schema = fs.readFileSync(schemaPath, 'utf8');
-    await pool.query(schema);
-  } else {
-    console.warn('db/schema.sql non trovato, avvio senza esecuzione schema.');
-      await pool.query(`
-    CREATE TABLE IF NOT EXISTS site_media (
-      id SERIAL PRIMARY KEY,
-      key TEXT UNIQUE NOT NULL,
-      value TEXT,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-  }
+  const schema = fs.readFileSync(schemaPath, 'utf8');
+  await pool.query(schema);
+} else {
+  console.warn('db/schema.sql non trovato, avvio senza esecuzione schema.');
+}
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS sponsors (
-      id SERIAL PRIMARY KEY,
-      nome TEXT,
-      logo_url TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS site_media (
+    id SERIAL PRIMARY KEY,
+    key TEXT UNIQUE NOT NULL,
+    value TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
-  await pool.query(`
-    ALTER TABLE sponsors
-    ADD COLUMN IF NOT EXISTS nome TEXT
-  `);
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS sponsors (
+    id SERIAL PRIMARY KEY,
+    nome TEXT,
+    logo_url TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
-  await pool.query(`
-    ALTER TABLE sponsors
-    ADD COLUMN IF NOT EXISTS logo_url TEXT
-  `);
+await pool.query(`
+  ALTER TABLE sponsors
+  ADD COLUMN IF NOT EXISTS nome TEXT
+`);
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS regolamenti (
-      id SERIAL PRIMARY KEY,
-      titolo TEXT NOT NULL,
-      file_url TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+await pool.query(`
+  ALTER TABLE sponsors
+  ADD COLUMN IF NOT EXISTS logo_url TEXT
+`);
 
-  await pool.query(`
-    ALTER TABLE regolamenti
-    ADD COLUMN IF NOT EXISTS titolo TEXT
-  `);
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS regolamenti (
+    id SERIAL PRIMARY KEY,
+    titolo TEXT NOT NULL,
+    file_url TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
-  await pool.query(`
-    ALTER TABLE regolamenti
-    ADD COLUMN IF NOT EXISTS file_url TEXT
-  `);
+await pool.query(`
+  ALTER TABLE regolamenti
+  ADD COLUMN IF NOT EXISTS titolo TEXT
+`);
 
-    await pool.query(`
-    CREATE TABLE IF NOT EXISTS news (
-      id SERIAL PRIMARY KEY,
-      titolo TEXT,
-      image_url TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+await pool.query(`
+  ALTER TABLE regolamenti
+  ADD COLUMN IF NOT EXISTS file_url TEXT
+`);
+
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS news (
+    id SERIAL PRIMARY KEY,
+    titolo TEXT,
+    image_url TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 }
 
 app.set('view engine', 'ejs');
