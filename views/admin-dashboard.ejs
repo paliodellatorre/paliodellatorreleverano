@@ -118,11 +118,22 @@
             <button class="button button-yellow" type="submit">Carica video</button>
           </form>
 
-          <% if (media && media.homepage_video_url) { %>
-            <div style="margin-top:16px;" class="small">
-              Video attuale caricato correttamente.
-            </div>
-          <% } %>
+         <% if (media && media.homepage_video_url) { %>
+  <div style="margin-top:16px;" class="small">
+    Video attuale caricato correttamente.
+  </div>
+
+  <form
+    method="post"
+    action="/admin/media/video/delete"
+    onsubmit="return confirm('Eliminare il video pubblicitario?')"
+    style="margin-top:12px;"
+  >
+    <button class="button button-green" type="submit">
+      Elimina video pubblicitario
+    </button>
+  </form>
+<% } %>
         </div>
 
         <div class="card" style="margin-bottom:20px;">
