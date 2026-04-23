@@ -96,3 +96,11 @@ ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_liability TEXT;
 
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player1_shirt_size TEXT;
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS player2_shirt_size TEXT;
+
+
+CREATE TABLE IF NOT EXISTS news (
+  id SERIAL PRIMARY KEY,
+  titolo TEXT,
+  image_url TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
