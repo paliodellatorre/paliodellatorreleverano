@@ -1,5 +1,0 @@
-<%- include('partials/header') %>
-<section id="sponsor" class="section"><div class="container"><div class="section-title"><small>Partner</small><h2>Sponsor</h2></div><% if (sponsors && sponsors.length) { %><div style="display:grid;grid-template-columns:1fr;gap:20px"><% sponsors.forEach(function(sponsor){ %><div class="card" style="text-align:center;padding:28px"><img src="<%= sponsor.logo_url %>" alt="Sponsor" style="max-width:100%;max-height:170px;object-fit:contain"></div><% }) %></div><% } else { %><div style="display:grid;grid-template-columns:1fr;gap:20px"><div class="card">Sponsor 1</div><div class="card">Sponsor 2</div><div class="card">Sponsor 3</div><div class="card">Sponsor 4</div></div><% } %></div></section>
-
-<%- include('partials/promo-video') %>
-<%- include('partials/footer') %>
