@@ -228,11 +228,22 @@ app.get('/iscrizioni', async (req, res, next) => {
 app.get('/kids', async (req, res, next) => {
   try {
     const media = await getMediaMap();
+
+    const countResult = await pool.query(
+      'SELECT COUNT(*)::int AS total FROM kids_registrations'
+    );
+
+    const kidsCount = countResult.rows[0]?.total || 0;
+    const kidsLimit = 20;
+
     res.render('kids', {
       title: 'Kids - Summer Palio',
       media,
       formData: {},
-      errors: []
+      errors: [],
+      kidsFull: kidsCount >= kidsLimit,
+      kidsCount,
+      kidsLimit
     });
   } catch (err) {
     next(err);
@@ -265,11 +276,41 @@ app.post('/kids', async (req, res, next) => {
 
     if (errors.length) {
       const media = await getMediaMap();
+      const countResult = await pool.query(
+        'SELECT COUNT(*)::int AS total FROM kids_registrations'
+      );
+      const kidsCount = countResult.rows[0]?.total || 0;
+      const kidsLimit = 20;
+
       return res.status(400).render('kids', {
         title: 'Kids - Summer Palio',
         media,
         formData: req.body,
-        errors
+        errors,
+        kidsFull: kidsCount >= kidsLimit,
+        kidsCount,
+        kidsLimit
+      });
+    }
+
+    const countResult = await pool.query(
+      'SELECT COUNT(*)::int AS total FROM kids_registrations'
+    );
+
+    const kidsCount = countResult.rows[0]?.total || 0;
+    const kidsLimit = 20;
+
+    if (kidsCount >= kidsLimit) {
+      const media = await getMediaMap();
+
+      return res.status(400).render('kids', {
+        title: 'Kids - Summer Palio',
+        media,
+        formData: req.body,
+        errors: ['Le iscrizioni Kids sono chiuse: è stato raggiunto il numero massimo di 20 bambini.'],
+        kidsFull: true,
+        kidsCount,
+        kidsLimit
       });
     }
 

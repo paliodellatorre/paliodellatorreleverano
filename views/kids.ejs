@@ -16,7 +16,14 @@
       </div>
     <% } %>
 
+    <% if (typeof kidsFull !== 'undefined' && kidsFull) { %>
+      <div class="notice notice-error">
+        Le iscrizioni Kids sono chiuse: è stato raggiunto il numero massimo di <%= kidsLimit || 20 %> bambini.
+      </div>
+    <% } %>
+
     <div class="card">
+      <% if (!(typeof kidsFull !== 'undefined' && kidsFull)) { %>
       <form method="POST" action="/kids">
         <h3 style="margin-top:0;color:var(--green);">Dati bambino</h3>
         <div class="form-grid">
@@ -72,6 +79,11 @@
           <button class="button button-yellow" type="submit">Invia iscrizione Kids</button>
         </div>
       </form>
+      <% } else { %>
+        <div style="text-align:center; font-weight:800; color:var(--green);">
+          Posti disponibili terminati.
+        </div>
+      <% } %>
     </div>
   </div>
 </section>
