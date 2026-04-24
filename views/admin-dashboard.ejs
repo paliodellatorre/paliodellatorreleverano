@@ -7,6 +7,10 @@
     gap: 18px;
     align-items: start;
   }
+  .admin-accordion {
+    margin-bottom: 22px;
+    overflow: hidden;
+  }
   .admin-accordion summary {
     list-style: none;
     cursor: pointer;
@@ -95,9 +99,13 @@
       </div>
     <% } %>
 
-    <div class="card" style="margin-bottom:22px">
-      <h3 style="margin-top:0;color:var(--green)">Elenco iscrizioni sport</h3>
-      <div class="table-wrap">
+    <details class="card admin-accordion">
+      <summary>
+        <span>Elenco iscrizioni sport</span>
+        <span class="accordion-arrow">▶</span>
+      </summary>
+      <div class="admin-accordion-content">
+        <div class="table-wrap">
         <table>
           <thead><tr><th>Nome</th><th>Rione</th><th>Sport</th><th>Contatti</th><th>Azioni</th></tr></thead>
           <tbody>
@@ -114,11 +122,16 @@
           </tbody>
         </table>
       </div>
-    </div>
+      </div>
+    </details>
 
-    <div class="card" style="margin-bottom:22px">
-      <h3 style="margin-top:0;color:var(--green)">Elenco iscrizioni Kids</h3>
-      <div class="table-wrap">
+    <details class="card admin-accordion">
+      <summary>
+        <span>Elenco iscrizioni Kids</span>
+        <span class="accordion-arrow">▶</span>
+      </summary>
+      <div class="admin-accordion-content">
+        <div class="table-wrap">
         <table>
           <thead><tr><th>Bambino</th><th>Genitore</th><th>Contatti</th><th>Consensi</th><th>Azioni</th></tr></thead>
           <tbody>
@@ -135,7 +148,8 @@
           </tbody>
         </table>
       </div>
-    </div>
+      </div>
+    </details>
 
     <div class="admin-accordion-wrap">
       <details class="card admin-accordion"><summary><span>Impostazioni generali</span><span class="accordion-arrow">▶</span></summary><div class="admin-accordion-content"><form method="post" action="/admin/settings/update"><div style="margin-bottom:12px"><label>Iscrizioni aperte</label><select name="registrations_open"><option value="true" <%= settings.registrations_open === 'true' ? 'selected' : '' %>>Aperte</option><option value="false" <%= settings.registrations_open !== 'true' ? 'selected' : '' %>>Chiuse</option></select></div><div style="margin-bottom:12px"><label>Email</label><input name="contact_email" value="<%= settings.contact_email || '' %>"></div><div style="margin-bottom:12px"><label>Facebook</label><input name="contact_facebook" value="<%= settings.contact_facebook || 'Il Palio della Torre - Torneo dei Rioni Leverano' %>"></div><div style="margin-bottom:14px"><label>Instagram</label><input name="contact_instagram" value="<%= settings.contact_instagram || 'ilpaliodellatorreleverano' %>"></div><div style="margin-bottom:14px"><label>Regolamento iniziale accesso sito</label><textarea name="site_regolamento_accesso" rows="10" placeholder="Scrivi qui il regolamento che deve apparire prima dell'accesso al sito"><%= settings.site_regolamento_accesso || '' %></textarea></div><button class="button button-yellow" type="submit">Salva impostazioni</button></form></div></details>
