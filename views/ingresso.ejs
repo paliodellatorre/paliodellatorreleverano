@@ -1,0 +1,46 @@
+<%- include('partials/header') %>
+<section class="section">
+  <div class="container" style="max-width:900px">
+    <div class="section-title" style="text-align:center"><small>Accesso al sito</small><h2>Regolamento</h2></div>
+    <div id="regolamentoBox" class="card" style="white-space:normal;line-height:1.8;font-size:16px;max-height:520px;overflow-y:auto">
+      <%- settings.site_regolamento_accesso || `
+<h2 style="text-align:center">REGOLAMENTO DI APPARTENENZA AL PROPRIO RIONE</h2>
+<p style="text-align:center">Palio della Torre – Leverano<br>Manifestazione patrocinata dal Comune di Leverano<br>Attiva dal 2021</p>
+<p>Prima di accedere al sito e procedere con le iscrizioni, è necessario leggere attentamente il seguente regolamento. L’accesso al sito e la partecipazione al Palio della Torre Leverano implicano la presa visione e l’accettazione delle disposizioni riportate di seguito.</p>
+<hr>
+<h3>Art. 1 – Suddivisione del territorio in Rioni</h3>
+<ul><li>Pozzolungo Nord</li><li>Pozzolungo Sud</li><li>Iana</li><li>Chianca</li><li>Consolazione</li><li>Centro</li><li>Patula Cupa – Quartararu</li><li>Zita Rosa</li></ul>
+<h3>Art. 2 – Riferimento alla mappa ufficiale dei Rioni</h3>
+<p>La mappa ufficiale dei Rioni rappresenta il riferimento unico e vincolante per determinare l’appartenenza territoriale di ogni partecipante.</p>
+<p style="text-align:center;font-size:18px"><b><a href="https://www.google.com/maps/@40.2878732,17.9905045,15z/data=!3m1!4b1!4m2!6m1!1s1AiNo30X3Qloy24nwtxUo06kHozB_yC4" target="_blank" rel="noopener noreferrer" style="color:#003129;text-decoration:underline">👉 CONSULTA LA MAPPA UFFICIALE DEI RIONI</a></b></p>
+<h3>Art. 3 – Criteri di appartenenza al proprio Rione</h3>
+<ul><li>Residenza anagrafica nel territorio del Rione</li><li>Domicilio abituale nel territorio del Rione</li><li>Possesso o utilizzo stabile di un’abitazione nel territorio del Rione</li><li>Nascita o crescita nel territorio del Rione</li><li>Appartenenza familiare</li><li>Attività lavorativa o commerciale stabile nel territorio del Rione</li></ul>
+<h3>Art. 4 – Partecipazione di residenti fuori Leverano</h3>
+<ul><li>È nato a Leverano</li><li>Ha risieduto in passato nel territorio del Rione</li><li>Ha familiari residenti nel Rione</li><li>Possiede o utilizza un’abitazione nel Rione</li><li>Svolge attività lavorativa nel territorio del Rione</li><li>Ha un legame riconosciuto con il Rione</li></ul>
+<h3>Art. 5 – Assegnazione del Rione</h3>
+<ul><li>Deve indicare il proprio Rione al momento dell’iscrizione</li><li>Può rappresentare un solo Rione per ogni edizione del Palio</li><li>Non può cambiare Rione durante lo svolgimento della manifestazione</li></ul>
+<h3>Art. 6 – Appartenenza delle coppie allo stesso Rione</h3>
+<ul><li>In tutte le discipline a coppia, entrambi i partecipanti devono appartenere allo stesso Rione</li><li>Non è consentita la formazione di coppie composte da partecipanti appartenenti a Rioni diversi</li><li>La coppia rappresenterà esclusivamente il Rione indicato al momento dell’iscrizione</li></ul>
+<h3>Art. 7 – Verifica dell’appartenenza al Rione</h3>
+<ul><li>Verificare la veridicità delle informazioni dichiarate</li><li>Richiedere chiarimenti o documentazione</li><li>Modificare l’assegnazione del Rione in caso di errori o irregolarità</li><li>In caso di violazioni potranno essere adottati provvedimenti disciplinari fino all’esclusione</li></ul>
+<h3>Art. 8 – Decisioni dell’organizzazione</h3>
+<p>Le decisioni dell’organizzazione del Palio della Torre Leverano in merito all’appartenenza al Rione e all’interpretazione del presente regolamento sono definitive e insindacabili.</p>
+` %>
+    </div>
+    <form method="POST" action="/ingresso/continua" class="card" style="margin-top:20px">
+      <label class="checkbox"><input type="checkbox" name="regolamento_ok" id="regolamento_ok" value="yes" required disabled>Ho preso visione del regolamento e accetto le condizioni di partecipazione.</label>
+      <div class="small" id="scrollMessage" style="margin-top:12px;color:#8a6500;font-weight:700">Scorri fino in fondo al regolamento per abilitare la prosecuzione.</div>
+      <div style="margin-top:18px"><button class="button button-yellow" type="submit" id="proseguiBtn" disabled>Prosegui</button></div>
+    </form>
+  </div>
+</section>
+<script>
+(function(){
+  const box=document.getElementById('regolamentoBox'), ok=document.getElementById('regolamento_ok'), btn=document.getElementById('proseguiBtn'), msg=document.getElementById('scrollMessage');
+  let scrolled=false;
+  function update(){btn.disabled=!(scrolled&&ok.checked)}
+  function unlock(){const near=box.scrollTop+box.clientHeight>=box.scrollHeight-50;if(near){scrolled=true;ok.disabled=false;msg.textContent='Hai raggiunto la fine del regolamento. Ora puoi confermare e proseguire.';msg.style.color='#065f46'}update()}
+  box.addEventListener('scroll',unlock);ok.addEventListener('change',update);unlock();
+})();
+</script>
+<%- include('partials/footer') %>
