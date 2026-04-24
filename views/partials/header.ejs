@@ -11,28 +11,17 @@
     <header class="header">
       <div class="container header-brand-center">
         <a class="brand brand-centered" href="/?ok=1">
-          <div class="brand-badge">
-            <img src="/logo-pdt.png" alt="Logo Palio della Torre" />
-          </div>
-          <div class="brand-text">
-            <div class="brand-title">IL PALIO DELLA TORRE</div>
-            <div class="brand-subtitle">Leverano</div>
-          </div>
+          <div class="brand-badge"><img src="/logo-pdt.png" alt="Logo Palio della Torre" /></div>
+          <div class="brand-text"><div class="brand-title">IL PALIO DELLA TORRE</div><div class="brand-subtitle">Leverano</div></div>
         </a>
       </div>
-
       <div class="menu-strip">
         <div class="container menu-burger-inner">
           <details class="burger-menu">
             <summary class="burger-summary" aria-label="Apri menu">
-              <span class="burger-lines" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
-              </span>
+              <span class="burger-lines" aria-hidden="true"><span></span><span></span><span></span></span>
               <span class="burger-label">MENU</span>
             </summary>
-
             <nav class="burger-panel" aria-label="Menu principale">
               <a href="/?ok=1">HOME</a>
               <a href="/iscrizioni?ok=1">ISCRIZIONI</a>
@@ -42,17 +31,11 @@
               <a href="/sponsor?ok=1">SPONSOR</a>
             </nav>
           </details>
-
-          <a href="/admin" class="admin-icon" title="Admin" aria-label="Area admin">👤</a>
+          <a href="/admin" class="admin-icon" title="Area admin" aria-label="Area admin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5Zm0 2c-4.42 0-8 2.24-8 5v1c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-1c0-2.76-3.58-5-8-5Z"/></svg></a>
         </div>
       </div>
     </header>
   <% } %>
-
   <div class="container" style="padding-top:12px;">
-    <% if (flash) { %>
-      <div class="notice <%= flash.type === 'success' ? 'notice-success' : 'notice-error' %>">
-        <%= flash.message %>
-      </div>
-    <% } %>
+    <% if (flash) { %><div class="notice <%= flash.type === 'success' ? 'notice-success' : 'notice-error' %>"><%= flash.message %></div><% } %>
   </div>
