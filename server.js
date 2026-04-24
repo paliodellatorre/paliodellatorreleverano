@@ -387,11 +387,106 @@ app.get('/admin/registrations/:id/edit', requireAuth, async (req, res, next) => 
 
 app.post('/admin/registrations/:id/update', requireAuth, async (req, res, next) => {
   try {
-    const { full_name, birth_date, phone, email, rione, sport_id, notes } = req.body;
+    const {
+      full_name,
+      birth_date,
+      phone,
+      email,
+      rione,
+      sport_id,
+      notes,
+      player1_full_name,
+      player1_birth_date,
+      player1_tax_code,
+      player1_phone,
+      player1_rione_criteria,
+      player1_rione_address,
+      player1_shirt,
+      player1_shirt_size,
+      player2_full_name,
+      player2_birth_date,
+      player2_tax_code,
+      player2_phone,
+      player2_rione_criteria,
+      player2_rione_address,
+      player2_shirt,
+      player2_shirt_size,
+      fee_confirmation,
+      terms_rione_check,
+      terms_organizer_confirmation,
+      terms_privacy,
+      terms_images,
+      terms_liability
+    } = req.body;
+
     await pool.query(
-      `UPDATE registrations SET full_name=$1, birth_date=$2, phone=$3, email=$4, rione=$5, sport_id=$6, notes=$7, updated_at=NOW() WHERE id=$8`,
-      [full_name, birth_date || null, phone, email, rione, sport_id, notes || null, req.params.id]
+      `UPDATE registrations
+       SET
+        full_name=$1,
+        birth_date=$2,
+        phone=$3,
+        email=$4,
+        rione=$5,
+        sport_id=$6,
+        notes=$7,
+        player1_full_name=$8,
+        player1_birth_date=$9,
+        player1_tax_code=$10,
+        player1_phone=$11,
+        player1_rione_criteria=$12,
+        player1_rione_address=$13,
+        player1_shirt=$14,
+        player1_shirt_size=$15,
+        player2_full_name=$16,
+        player2_birth_date=$17,
+        player2_tax_code=$18,
+        player2_phone=$19,
+        player2_rione_criteria=$20,
+        player2_rione_address=$21,
+        player2_shirt=$22,
+        player2_shirt_size=$23,
+        fee_confirmation=$24,
+        terms_rione_check=$25,
+        terms_organizer_confirmation=$26,
+        terms_privacy=$27,
+        terms_images=$28,
+        terms_liability=$29,
+        updated_at=NOW()
+       WHERE id=$30`,
+      [
+        (player1_full_name && player1_full_name.trim()) || (full_name && full_name.trim()) || null,
+        player1_birth_date || birth_date || null,
+        (player1_phone && player1_phone.trim()) || (phone && phone.trim()) || null,
+        email || null,
+        rione || null,
+        sport_id || null,
+        notes || null,
+        player1_full_name || null,
+        player1_birth_date || null,
+        player1_tax_code || null,
+        player1_phone || null,
+        player1_rione_criteria || null,
+        player1_rione_address || null,
+        player1_shirt || null,
+        player1_shirt_size || null,
+        player2_full_name || null,
+        player2_birth_date || null,
+        player2_tax_code || null,
+        player2_phone || null,
+        player2_rione_criteria || null,
+        player2_rione_address || null,
+        player2_shirt || null,
+        player2_shirt_size || null,
+        fee_confirmation || null,
+        terms_rione_check || null,
+        terms_organizer_confirmation || null,
+        terms_privacy || null,
+        terms_images || null,
+        terms_liability || null,
+        req.params.id
+      ]
     );
+
     setFlash(req, 'success', 'Iscrizione aggiornata con successo.');
     res.redirect('/admin');
   } catch (err) {
@@ -399,7 +494,7 @@ app.post('/admin/registrations/:id/update', requireAuth, async (req, res, next) 
   }
 });
 
-app.post('/admin/registrations/:id/delete', requireAuth, async (req, res, next) => {
+app.post('/admin/registrations/:id/delete' , requireAuth, async (req, res, next) => {
   try {
     await pool.query('DELETE FROM registrations WHERE id = $1', [req.params.id]);
     setFlash(req, 'success', 'Iscrizione eliminata.');
@@ -440,8 +535,6 @@ app.post('/admin/settings/update', requireAuth, async (req, res, next) => {
       contact_email: req.body.contact_email || '',
       contact_facebook: req.body.contact_facebook || '',
       contact_instagram: req.body.contact_instagram || '',
-      contact_facebook_url: req.body.contact_facebook_url || '',
-      contact_instagram_url: req.body.contact_instagram_url || '',
       site_regolamento_accesso: req.body.site_regolamento_accesso || ''
     };
     for (const [key, value] of Object.entries(payload)) {
