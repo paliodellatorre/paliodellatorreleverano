@@ -1,0 +1,44 @@
+<% if (typeof media !== 'undefined' && media && media.homepage_video_url) { %>
+<div id="videoPopup" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px">
+  <button onclick="chiudiVideo()" style="position:absolute;top:20px;right:20px;background:white;border:none;border-radius:50%;width:42px;height:42px;font-size:22px;cursor:pointer;font-weight:bold;z-index:10000">✕</button>
+  <video id="videoAdv" muted playsinline style="max-width:90%;max-height:90%;border-radius:12px;background:#000">
+    <source src="<%= media.homepage_video_url %>" type="video/mp4">
+  </video>
+</div>
+<script>
+(function(){
+  const INTERVAL_MS = 120000; // 2 minuti
+  const AUTO_CLOSE_MS = 8000;
+  const STORAGE_KEY = 'palioPromoLastShownAt';
+  const popup = document.getElementById('videoPopup');
+  const video = document.getElementById('videoAdv');
+  let autoCloseTimer = null;
+
+  window.chiudiVideo = function(){
+    if (!popup) return;
+    popup.style.display = 'none';
+    if (video) {
+      try { video.pause(); video.currentTime = 0; } catch(e) {}
+    }
+    if (autoCloseTimer) clearTimeout(autoCloseTimer);
+  };
+
+  function shouldShow(){
+    const last = Number(localStorage.getItem(STORAGE_KEY) || 0);
+    return Date.now() - last >= INTERVAL_MS;
+  }
+
+  function apriVideo(){
+    if (!popup || !video || !shouldShow()) return;
+    localStorage.setItem(STORAGE_KEY, String(Date.now()));
+    popup.style.display = 'flex';
+    try { video.currentTime = 0; video.play(); } catch(e) {}
+    if (autoCloseTimer) clearTimeout(autoCloseTimer);
+    autoCloseTimer = setTimeout(window.chiudiVideo, AUTO_CLOSE_MS);
+  }
+
+  setTimeout(apriVideo, 500);
+  setInterval(apriVideo, 10000);
+})();
+</script>
+<% } %>

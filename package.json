@@ -1,25 +1,5 @@
-{
-  "name": "palio-della-torre",
-  "version": "1.0.0",
-  "description": "Sito Palio della Torre con iscrizioni online, admin e database PostgreSQL",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "connect-pg-simple": "^10.0.0",
-    "dotenv": "^16.6.1",
-    "ejs": "^3.1.10",
-    "exceljs": "^4.4.0",
-    "express": "^4.21.2",
-    "express-session": "^1.18.1",
-    "pg": "^8.16.3",
-    "cloudinary": "^1.41.0",
-    "multer": "^1.4.5-lts.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.10"
-  }
-}
+<%- include('partials/header') %>
+<section id="novita" class="section"><div class="container"><div class="section-title"><small>Aggiornamenti</small><h2>NOVITÀ</h2></div><% if (news && news.length) { %><div style="display:grid;grid-template-columns:1fr;gap:20px"><% news.forEach(function(item){ %><div class="card" style="text-align:center;padding:24px"><% if (item.titolo) { %><div style="font-weight:800;color:var(--green);margin-bottom:14px"><%= item.titolo %></div><% } %><img src="<%= item.image_url %>" alt="Locandina novità" style="width:100%;max-height:none;object-fit:contain;display:block"></div><% }) %></div><% } else { %><div class="card">Nessuna novità disponibile al momento.</div><% } %></div></section>
+
+<%- include('partials/promo-video') %>
+<%- include('partials/footer') %>
