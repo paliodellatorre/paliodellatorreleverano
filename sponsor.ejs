@@ -1,5 +1,0 @@
-<%- include('partials/header') %>
-<section id="regolamenti" class="section"><div class="container"><div class="section-title"><small>Regolamenti</small><h2>Regolamenti</h2></div><div class="grid-4"><% if (regulations && regulations.length) { %><% regulations.forEach(function(reg){ %><a href="<%= reg.file_url %>" target="_blank" class="card"><strong><%= reg.titolo %></strong></a><% }) %><% } else { %><div class="card">Regolamento generale</div><div class="card">Regolamento Padel</div><div class="card">Regolamento Calcio</div><div class="card">Privacy e trattamento dati</div><% } %></div></div></section>
-
-<%- include('partials/promo-video') %>
-<%- include('partials/footer') %>
