@@ -1,0 +1,73 @@
+<%- include('partials/header') %>
+<section class="section">
+  <div class="container">
+    <div class="section-title">
+      <small>Pannello amministrazione</small>
+      <h2>Pannello Admin</h2>
+      <p>Qui puoi gestire iscrizioni, sport, contenuti, sponsor, regolamenti, novità, video ed Excel.</p>
+    </div>
+
+    <div class="top-actions" style="margin-bottom:18px">
+      <a class="button button-yellow" href="/admin/export/excel">Esporta Excel</a>
+      <form class="inline-form" method="post" action="/admin/logout">
+        <button class="button button-green" type="submit">Logout</button>
+      </form>
+    </div>
+
+    <% if (editItem) { %>
+      <div class="card" style="margin-bottom:20px">
+        <h3 style="margin-top:0;color:var(--green)">Modifica iscrizione #<%= editItem.id %></h3>
+        <form method="post" action="/admin/registrations/<%= editItem.id %>/update">
+          <div class="form-grid">
+            <div><label>Nome e cognome</label><input name="full_name" value="<%= editItem.full_name %>" required></div>
+            <div><label>Data di nascita</label><input type="date" name="birth_date" value="<%= editItem.birth_date ? new Date(editItem.birth_date).toISOString().slice(0,10) : '' %>"></div>
+            <div><label>Telefono</label><input name="phone" value="<%= editItem.phone %>" required></div>
+            <div><label>Email</label><input type="email" name="email" value="<%= editItem.email %>" required></div>
+            <div><label>Rione</label><input name="rione" value="<%= editItem.rione %>" required></div>
+            <div><label>Sport</label><select name="sport_id" required><% sports.forEach(function(sport){ %><option value="<%= sport.id %>" <%= Number(editItem.sport_id)===Number(sport.id)?'selected':'' %>><%= sport.name %></option><% }) %></select></div>
+          </div>
+          <div style="margin-top:12px"><label>Note</label><textarea name="notes"><%= editItem.notes || '' %></textarea></div>
+          <div class="top-actions" style="margin-top:16px"><button class="button button-yellow" type="submit">Salva modifica</button><a class="button button-green" href="/admin">Annulla</a></div>
+        </form>
+      </div>
+    <% } %>
+
+    <div class="card" style="margin-bottom:22px">
+      <h3 style="margin-top:0;color:var(--green)">Elenco iscrizioni</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>Rione</th><th>Sport</th><th>Contatti</th><th>Azioni</th></tr></thead>
+          <tbody>
+            <% if (!registrations.length) { %><tr><td colspan="5">Nessuna iscrizione presente.</td></tr><% } %>
+            <% registrations.forEach(function(item){ %>
+              <tr>
+                <td><strong><%= item.full_name %></strong><br><span class="small">Creato il <%= new Date(item.created_at).toLocaleString('it-IT') %></span><% if (item.notes) { %><br><span class="small"><%= item.notes %></span><% } %></td>
+                <td><%= item.rione %></td>
+                <td><%= item.sport_name %><br><span class="small">€<%= Number(item.sport_price).toFixed(2) %></span></td>
+                <td><%= item.phone %><br><span class="small"><%= item.email %></span></td>
+                <td><div class="actions"><a class="button button-green" href="/admin/registrations/<%= item.id %>/edit" style="padding:10px 14px">Modifica</a><form class="inline-form" method="post" action="/admin/registrations/<%= item.id %>/delete" onsubmit="return confirm('Eliminare questa iscrizione?')"><button class="button" style="background:#fee2e2;color:#991b1b;padding:10px 14px">Elimina</button></form></div></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-tools-grid">
+      <div class="card"><h3 style="margin-top:0;color:var(--green)">Impostazioni generali</h3><form method="post" action="/admin/settings/update"><div style="margin-bottom:12px"><label>Iscrizioni aperte</label><select name="registrations_open"><option value="true" <%= settings.registrations_open === 'true' ? 'selected' : '' %>>Aperte</option><option value="false" <%= settings.registrations_open !== 'true' ? 'selected' : '' %>>Chiuse</option></select></div><div style="margin-bottom:12px"><label>Email</label><input name="contact_email" value="<%= settings.contact_email || '' %>"></div><div style="margin-bottom:12px"><label>Facebook</label><input name="contact_facebook" value="<%= settings.contact_facebook || 'Il Palio della Torre - Torneo dei Rioni Leverano' %>"></div><div style="margin-bottom:14px"><label>Instagram</label><input name="contact_instagram" value="<%= settings.contact_instagram || 'ilpaliodellatorreleverano' %>"></div><div style="margin-bottom:14px"><label>Regolamento iniziale accesso sito</label><textarea name="site_regolamento_accesso" rows="10" placeholder="Scrivi qui il regolamento che deve apparire prima dell'accesso al sito"><%= settings.site_regolamento_accesso || '' %></textarea></div><button class="button button-yellow" type="submit">Salva impostazioni</button></form></div>
+
+      <div class="card"><h3 style="margin-top:0;color:var(--green)">NOVITÀ</h3><form method="post" action="/admin/news/create" enctype="multipart/form-data"><div style="margin-bottom:12px"><label>Titolo locandina (facoltativo)</label><input name="titolo"></div><div style="margin-bottom:14px"><label>Immagine locandina</label><input type="file" name="image" accept="image/*" required></div><button class="button button-yellow" type="submit">Carica locandina</button></form><% if (news && news.length) { %><div style="margin-top:18px"><% news.forEach(function(item){ %><div class="card" style="margin-top:12px;padding:16px"><% if (item.titolo) { %><div style="font-weight:800;margin-bottom:10px"><%= item.titolo %></div><% } %><img src="<%= item.image_url %>" alt="Locandina" style="width:100%;max-height:220px;object-fit:contain"><form method="post" action="/admin/news/<%= item.id %>/delete" onsubmit="return confirm('Eliminare questa locandina?')" style="margin-top:12px"><button class="button button-green" type="submit">Elimina locandina</button></form></div><% }) %></div><% } %></div>
+
+      <div class="card"><h3 style="margin-top:0;color:var(--green)">Video homepage</h3><form method="post" action="/admin/media/video" enctype="multipart/form-data"><div style="margin-bottom:14px"><label>Video pubblicitario</label><input type="file" name="video" accept="video/mp4,video/webm,video/quicktime" required></div><button class="button button-yellow" type="submit">Carica video</button></form><% if (media && media.homepage_video_url) { %><div style="margin-top:16px" class="small">Video attuale caricato correttamente.</div><form method="post" action="/admin/media/video/delete" onsubmit="return confirm('Eliminare il video pubblicitario?')" style="margin-top:12px"><button class="button button-green" type="submit">Elimina video pubblicitario</button></form><% } %></div>
+
+      <div class="card"><h3 style="margin-top:0;color:var(--green)">Aggiungi sport</h3><form method="post" action="/admin/sports/create"><div style="margin-bottom:12px"><label>Nome sport</label><input name="name" required></div><div style="margin-bottom:14px"><label>Prezzo</label><input type="number" step="0.01" min="0" name="price" value="0"></div><button class="button button-green" type="submit">Aggiungi</button></form></div>
+
+      <div class="card"><h3 style="margin-top:0;color:var(--green)">Gestione sport</h3><% sports.forEach(function(sport){ %><form method="post" action="/admin/sports/<%= sport.id %>/update" class="sport-row"><div style="margin-bottom:10px"><label>Nome</label><input name="name" value="<%= sport.name %>" required></div><div style="margin-bottom:10px"><label>Prezzo</label><input type="number" step="0.01" min="0" name="price" value="<%= Number(sport.price).toFixed(2) %>" required></div><div style="margin-bottom:14px;display:flex;align-items:center;gap:10px"><input type="checkbox" name="is_open" <%= sport.is_open ? 'checked' : '' %> style="width:auto"><span>Sport aperto</span></div><button class="button button-yellow" type="submit">Salva sport</button></form><% }) %></div>
+
+      <div class="card"><h3 style="margin-top:0;color:var(--green)">Carica sponsor</h3><form method="post" action="/admin/sponsors/create" enctype="multipart/form-data"><div style="margin-bottom:12px"><label>Nome sponsor (facoltativo)</label><input name="nome"></div><div style="margin-bottom:14px"><label>Logo sponsor</label><input type="file" name="logo" accept="image/*" required></div><button class="button button-yellow" type="submit">Carica sponsor</button></form><% if (sponsors && sponsors.length) { %><div style="margin-top:18px"><% sponsors.forEach(function(sponsor){ %><div class="card" style="margin-top:12px;padding:16px;text-align:center"><img src="<%= sponsor.logo_url %>" alt="Sponsor" style="max-width:100%;max-height:80px;object-fit:contain"><form method="post" action="/admin/sponsors/<%= sponsor.id %>/delete" onsubmit="return confirm('Eliminare questo sponsor?')" style="margin-top:12px"><button class="button button-green" type="submit">Elimina sponsor</button></form></div><% }) %></div><% } %></div>
+
+      <div class="card"><h3 style="margin-top:0;color:var(--green)">Carica regolamento PDF</h3><form method="post" action="/admin/regolamenti/create" enctype="multipart/form-data"><div style="margin-bottom:12px"><label>Titolo regolamento</label><input name="titolo" placeholder="Es. Regolamento Padel" required></div><div style="margin-bottom:14px"><label>File PDF</label><input type="file" name="pdf" accept="application/pdf" required></div><button class="button button-yellow" type="submit">Carica regolamento</button></form><% if (regulations && regulations.length) { %><div style="margin-top:18px"><% regulations.forEach(function(reg){ %><div class="card" style="margin-top:12px;padding:16px"><strong><%= reg.titolo %></strong><div class="top-actions" style="margin-top:12px"><a class="button button-yellow" href="<%= reg.file_url %>" target="_blank" style="padding:10px 14px">Apri PDF</a><form class="inline-form" method="post" action="/admin/regolamenti/<%= reg.id %>/delete" onsubmit="return confirm('Eliminare questo regolamento?')"><button class="button button-green" type="submit" style="padding:10px 14px">Elimina</button></form></div></div><% }) %></div><% } %></div>
+    </div>
+  </div>
+</section>
+<%- include('partials/footer') %>

@@ -1,0 +1,5 @@
+<%- include('partials/header') %>
+<section id="novita" class="section"><div class="container"><div class="section-title"><small>Aggiornamenti</small><h2>NOVITÀ</h2></div><% if (news && news.length) { %><div style="display:grid;grid-template-columns:1fr;gap:20px"><% news.forEach(function(item){ %><div class="card" style="text-align:center;padding:24px"><% if (item.titolo) { %><div style="font-weight:800;color:var(--green);margin-bottom:14px"><%= item.titolo %></div><% } %><img src="<%= item.image_url %>" alt="Locandina novità" style="width:100%;max-height:none;object-fit:contain;display:block"></div><% }) %></div><% } else { %><div class="card">Nessuna novità disponibile al momento.</div><% } %></div></section>
+
+<%- include('partials/promo-video') %>
+<%- include('partials/footer') %>
