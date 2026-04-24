@@ -1,38 +1,63 @@
-<header class="site-header">
-  <div class="header-shell">
-    <details class="burger-menu">
-      <summary class="burger-summary">
-        <span class="burger-lines" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </span>
-        <span>MENU</span>
-      </summary>
-
-      <nav class="burger-dropdown">
-        <a href="/">Home</a>
-        <a href="/iscrizioni">Iscrizioni</a>
-        <a href="/kids">Kids</a>
-        <a href="/regolamenti">Regolamenti</a>
-        <a href="/novita">Novità</a>
-        <a href="/chi-siamo">Chi siamo</a>
-        <a href="/sponsor">Sponsor</a>
-      </nav>
-    </details>
-
-    <a href="/" class="brand-center">
-      <img src="/logo-pdt.png" alt="Logo Palio della Torre" class="brand-logo">
-      <div class="brand-text">
-        <div class="brand-main">IL PALIO DELLA TORRE</div>
-        <div class="brand-sub">Leverano</div>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title || 'Il Palio della Torre' %></title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <% if (currentPath !== '/admin/login') { %>
+    <header class="header">
+      <div class="container header-brand-center">
+        <a class="brand brand-centered" href="/?ok=1">
+          <div class="brand-badge">
+            <img src="/logo-pdt.png" alt="Logo Palio della Torre" />
+          </div>
+          <div class="brand-text">
+            <div class="brand-title">IL PALIO DELLA TORRE</div>
+            <div class="brand-subtitle">Leverano</div>
+          </div>
+        </a>
       </div>
-    </a>
 
-    <a href="/admin" class="admin-link" aria-label="Admin">
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-        <path fill="currentColor" d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5Zm0 2c-4.42 0-8 2.24-8 5v1.5c0 .83.67 1.5 1.5 1.5h13c.83 0 1.5-.67 1.5-1.5V19c0-2.76-3.58-5-8-5Z"/>
-      </svg>
-    </a>
+      <div class="menu-strip">
+        <div class="container menu-burger-inner">
+          <details class="burger-menu">
+            <summary class="burger-summary" aria-label="Apri menu">
+              <span class="burger-lines" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+              <span class="burger-label">MENU</span>
+            </summary>
+
+            <nav class="burger-panel" aria-label="Menu principale">
+              <a href="/?ok=1">HOME</a>
+              <a href="/iscrizioni?ok=1">ISCRIZIONI</a>
+              <a href="/kids?ok=1">KIDS</a>
+              <a href="/regolamenti?ok=1">REGOLAMENTI</a>
+              <a href="/novita?ok=1">NOVITÀ</a>
+              <a href="/chi-siamo?ok=1">CHI SIAMO</a>
+              <a href="/sponsor?ok=1">SPONSOR</a>
+            </nav>
+          </details>
+
+          <a href="/admin" class="admin-icon" title="Admin" aria-label="Area admin">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5Zm0 2c-4.42 0-8 2.24-8 5v1.2c0 1 .8 1.8 1.8 1.8h12.4c1 0 1.8-.8 1.8-1.8V19c0-2.76-3.58-5-8-5Z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </header>
+  <% } %>
+
+  <div class="container" style="padding-top:12px;">
+    <% if (flash) { %>
+      <div class="notice <%= flash.type === 'success' ? 'notice-success' : 'notice-error' %>">
+        <%= flash.message %>
+      </div>
+    <% } %>
   </div>
-</header>

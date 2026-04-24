@@ -43,3 +43,15 @@
 .burger-lines span {
   background: var(--green) !important;
 }
+
+
+/* FIX DEFINITIVO MENU + KIDS */
+.burger-summary,
+.menu-toggle {
+  background: var(--yellow) !important;
+  color: var(--green) !important;
+}
+
+.burger-lines span {
+  background: var(--green) !important;
+}
