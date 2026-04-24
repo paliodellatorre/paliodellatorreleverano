@@ -89,6 +89,7 @@ app.use((req, res, next) => {
   const isStatic = req.path.startsWith('/styles.css') || req.path.startsWith('/logo-pdt.png') || req.path.startsWith('/favicon') || req.path.startsWith('/public/');
   const isAdmin = req.path.startsWith('/admin');
   if (isStatic || isAdmin || allowedPaths.includes(req.path)) return next();
+  if (req.method === 'POST' && req.path === '/iscrizioni') return next();
   if (req.query.ok === '1') return next();
   return res.redirect('/ingresso');
 });
@@ -152,27 +153,85 @@ app.post('/ingresso/continua', (req, res) => {
   return res.redirect('/?ok=1');
 });
 
+async function renderIscrizioniPage(req, res, statusCode = 200, formData = {}, errors = []) {
+  const sports = await pool.query('SELECT * FROM sports WHERE is_open = true ORDER BY name');
+  const settings = await getSettingsMap();
+  const media = await getMediaMap();
+  return res.status(statusCode).render('iscrizioni', {
+    title: 'Iscrizioni',
+    sports: sports.rows,
+    settings,
+    media,
+    rioni: RIONI,
+    rioneCriteria: RIONE_CRITERIA,
+    formData,
+    errors
+  });
+}
+
 app.get('/', async (req, res, next) => {
   try {
     const sports = await pool.query('SELECT * FROM sports WHERE is_open = true ORDER BY name');
-    const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY id DESC');
-    const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
-    const news = await pool.query('SELECT * FROM news ORDER BY created_at DESC, id DESC');
     const settings = await getSettingsMap();
     const media = await getMediaMap();
-    res.render('home', {
-      title: 'Il Palio della Torre',
-      sports: sports.rows,
-      sponsors: sponsors.rows,
-      regulations: regulations.rows,
-      news: news.rows,
-      media,
-      settings,
-      rioni: RIONI,
-      rioneCriteria: RIONE_CRITERIA,
-      formData: {},
-      errors: []
-    });
+    res.render('home', { title: 'Il Palio della Torre', sports: sports.rows, settings, media });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/iscrizioni', async (req, res, next) => {
+  try {
+    return renderIscrizioniPage(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/regolamenti', async (req, res, next) => {
+  try {
+    const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
+    const media = await getMediaMap();
+    res.render('regolamenti', { title: 'Regolamenti', regulations: regulations.rows, media });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/novita', async (req, res, next) => {
+  try {
+    const news = await pool.query('SELECT * FROM news ORDER BY created_at DESC, id DESC');
+    const media = await getMediaMap();
+    res.render('novita', { title: 'Novità', news: news.rows, media });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/chi-siamo', async (req, res, next) => {
+  try {
+    const media = await getMediaMap();
+    res.render('chi-siamo', { title: 'Chi siamo', media });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/contatti', async (req, res, next) => {
+  try {
+    const settings = await getSettingsMap();
+    const media = await getMediaMap();
+    res.render('contatti', { title: 'Contatti', settings, media });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/sponsor', async (req, res, next) => {
+  try {
+    const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY id DESC');
+    const media = await getMediaMap();
+    res.render('sponsor', { title: 'Sponsor', sponsors: sponsors.rows, media });
   } catch (err) {
     next(err);
   }
@@ -227,23 +286,7 @@ app.post('/iscrizioni', async (req, res, next) => {
     if (terms_liability !== 'yes') errors.push('Devi accettare la clausola di responsabilità.');
 
     if (errors.length) {
-      const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY id DESC');
-      const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
-      const news = await pool.query('SELECT * FROM news ORDER BY created_at DESC, id DESC');
-      const media = await getMediaMap();
-      return res.status(400).render('home', {
-        title: 'Il Palio della Torre',
-        sports: sports.rows,
-        sponsors: sponsors.rows,
-        regulations: regulations.rows,
-        news: news.rows,
-        media,
-        settings,
-        rioni: RIONI,
-        rioneCriteria: RIONE_CRITERIA,
-        formData: req.body,
-        errors
-      });
+      return renderIscrizioniPage(req, res, 400, req.body, errors);
     }
 
     await pool.query(
@@ -267,7 +310,7 @@ app.post('/iscrizioni', async (req, res, next) => {
     );
 
     setFlash(req, 'success', 'Iscrizione inviata correttamente.');
-    res.redirect('/?ok=1#iscrizioni');
+    res.redirect('/iscrizioni?ok=1');
   } catch (err) {
     next(err);
   }
