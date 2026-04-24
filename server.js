@@ -113,16 +113,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Regolamento iniziale: viene mostrato sempre prima dell'accesso alla home.
-app.use((req, res, next) => {
-  const allowedPaths = ['/ingresso', '/ingresso/continua', '/admin', '/admin/login', '/admin/logout'];
-  const isStatic = req.path.startsWith('/styles.css') || req.path.startsWith('/logo-pdt.png') || req.path.startsWith('/favicon') || req.path.startsWith('/public/');
-  const isAdmin = req.path.startsWith('/admin');
-  if (isStatic || isAdmin || allowedPaths.includes(req.path)) return next();
-  if (req.method === 'POST' && (req.path === '/iscrizioni' || req.path === '/kids')) return next();
-  if (req.query.ok === '1') return next();
-  return res.redirect('/ingresso');
-});
+// Il regolamento non blocca più tutto il sito.
+// Verrà mostrato solo quando si accede alla pagina Iscrizioni sport.
 
 function setFlash(req, type, message) {
   req.session.flash = { type, message };
@@ -180,7 +172,9 @@ app.post('/ingresso/continua', (req, res) => {
     setFlash(req, 'error', 'Devi leggere il regolamento prima di proseguire.');
     return res.redirect('/ingresso');
   }
-  return res.redirect('/?ok=1');
+
+  // Dopo aver accettato il regolamento si va alle iscrizioni sport.
+  return res.redirect('/iscrizioni?ok=1');
 });
 
 async function renderIscrizioniPage(req, res, statusCode = 200, formData = {}, errors = []) {
@@ -219,6 +213,12 @@ app.get('/', async (req, res, next) => {
 
 app.get('/iscrizioni', async (req, res, next) => {
   try {
+    // Prima di compilare le iscrizioni sport, l'utente deve leggere il regolamento.
+    // Questo controllo vale solo per le iscrizioni sport, non per KIDS e non per il resto del sito.
+    if (req.query.ok !== '1') {
+      return res.redirect('/ingresso');
+    }
+
     return renderIscrizioniPage(req, res);
   } catch (err) {
     next(err);
