@@ -1,18 +1,34 @@
 <footer class="site-footer">
-  <div class="container footer-grid">
+  <div class="container footer-grid footer-grid-centered">
     <div>
       <strong class="footer-title">Il Palio della Torre</strong>
       <div class="footer-subtitle">Torneo dei rioni Leverano</div>
     </div>
 
-    <div class="footer-contacts">
-      <strong>Contatti</strong>
-      <a href="https://www.facebook.com/share/16jGEvJ7pg/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">
-        Facebook: Il Palio della Torre - Torneo dei Rioni Leverano
+    <div class="footer-socials" aria-label="Contatti">
+      <% const facebookUrl = settings.contact_facebook_url || 'https://www.facebook.com/share/16jGEvJ7pg/?mibextid=wwXIfr'; %>
+      <% const instagramUrl = settings.contact_instagram_url || 'https://www.instagram.com/ilpaliodellatorreleverano?igsh=MTRrNjlrbDhwbDc3MA=='; %>
+      <% const emailValue = settings.contact_email || ''; %>
+
+      <a href="<%= facebookUrl %>" target="_blank" rel="noopener noreferrer" class="social-icon" title="Facebook" aria-label="Facebook">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M22 12.06C22 6.48 17.52 2 11.94 2S2 6.48 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.51 1.49-3.9 3.77-3.9 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.9h2.78l-.44 2.91h-2.34V22c4.78-.76 8.44-4.92 8.44-9.94Z"/>
+        </svg>
       </a>
-      <a href="https://www.instagram.com/ilpaliodellatorreleverano?igsh=MTRrNjlrbDhwbDc3MA==" target="_blank" rel="noopener noreferrer">
-        Instagram: ilpaliodellatorreleverano
+
+      <a href="<%= instagramUrl %>" target="_blank" rel="noopener noreferrer" class="social-icon" title="Instagram" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7.75 2h8.5A5.76 5.76 0 0 1 22 7.75v8.5A5.76 5.76 0 0 1 16.25 22h-8.5A5.76 5.76 0 0 1 2 16.25v-8.5A5.76 5.76 0 0 1 7.75 2Zm0 2A3.75 3.75 0 0 0 4 7.75v8.5A3.75 3.75 0 0 0 7.75 20h8.5A3.75 3.75 0 0 0 20 16.25v-8.5A3.75 3.75 0 0 0 16.25 4h-8.5Zm4.25 3.35A4.65 4.65 0 1 1 7.35 12 4.65 4.65 0 0 1 12 7.35Zm0 2A2.65 2.65 0 1 0 14.65 12 2.65 2.65 0 0 0 12 9.35ZM17.25 6.8a1.1 1.1 0 1 1-1.1 1.1 1.1 1.1 0 0 1 1.1-1.1Z"/>
+        </svg>
       </a>
+
+      <% if (emailValue) { %>
+        <a href="mailto:<%= emailValue %>" class="social-icon" title="Email" aria-label="Email">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 2v.35l8 5.15 8-5.15V7H4Zm0 10h16V9.7l-7.46 4.8a1 1 0 0 1-1.08 0L4 9.7V17Z"/>
+          </svg>
+        </a>
+      <% } %>
     </div>
 
     <div class="footer-copy">© 2026 Tutti i diritti riservati</div>

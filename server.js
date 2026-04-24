@@ -440,6 +440,8 @@ app.post('/admin/settings/update', requireAuth, async (req, res, next) => {
       contact_email: req.body.contact_email || '',
       contact_facebook: req.body.contact_facebook || '',
       contact_instagram: req.body.contact_instagram || '',
+      contact_facebook_url: req.body.contact_facebook_url || '',
+      contact_instagram_url: req.body.contact_instagram_url || '',
       site_regolamento_accesso: req.body.site_regolamento_accesso || ''
     };
     for (const [key, value] of Object.entries(payload)) {
