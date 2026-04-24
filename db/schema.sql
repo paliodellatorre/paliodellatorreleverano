@@ -112,3 +112,19 @@ SELECT * FROM (VALUES
   ('Calcio 1vs1', 10, true)
 ) AS v(name, price, is_open)
 WHERE NOT EXISTS (SELECT 1 FROM sports);
+
+
+CREATE TABLE IF NOT EXISTS kids_registrations (
+  id SERIAL PRIMARY KEY,
+  child_full_name TEXT NOT NULL,
+  child_birth_date DATE NOT NULL,
+  child_tax_code TEXT NOT NULL,
+  parent_full_name TEXT NOT NULL,
+  parent_tax_code TEXT NOT NULL,
+  parent_email TEXT NOT NULL,
+  parent_phone TEXT NOT NULL,
+  privacy_consent TEXT NOT NULL,
+  media_consent TEXT DEFAULT 'no',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

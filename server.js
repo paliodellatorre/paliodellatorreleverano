@@ -58,6 +58,36 @@ async function runSchema() {
   await pool.query(`CREATE TABLE IF NOT EXISTS sponsors (id SERIAL PRIMARY KEY, nome TEXT, logo_url TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
   await pool.query(`CREATE TABLE IF NOT EXISTS regolamenti (id SERIAL PRIMARY KEY, titolo TEXT NOT NULL, file_url TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
   await pool.query(`CREATE TABLE IF NOT EXISTS site_settings (id SERIAL PRIMARY KEY, key TEXT UNIQUE NOT NULL, value TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS kids_registrations (
+      id SERIAL PRIMARY KEY,
+      child_full_name TEXT NOT NULL,
+      child_birth_date DATE NOT NULL,
+      child_tax_code TEXT NOT NULL,
+      parent_full_name TEXT NOT NULL,
+      parent_tax_code TEXT NOT NULL,
+      parent_email TEXT NOT NULL,
+      parent_phone TEXT NOT NULL,
+      privacy_consent TEXT NOT NULL,
+      media_consent TEXT DEFAULT 'no',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS child_full_name TEXT`);
+  await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS child_birth_date DATE`);
+  await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS child_tax_code TEXT`);
+  await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS parent_full_name TEXT`);
+  await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS parent_tax_code TEXT`);
+  await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS parent_email TEXT`);
+  await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS parent_phone TEXT`);
+  await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS privacy_consent TEXT`);
+  await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS media_consent TEXT DEFAULT 'no'`);
+  await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
+
+  await pool.query(`DELETE FROM sports WHERE LOWER(name) = 'corsa'`);
 }
 
 app.set('view engine', 'ejs');
@@ -89,7 +119,7 @@ app.use((req, res, next) => {
   const isStatic = req.path.startsWith('/styles.css') || req.path.startsWith('/logo-pdt.png') || req.path.startsWith('/favicon') || req.path.startsWith('/public/');
   const isAdmin = req.path.startsWith('/admin');
   if (isStatic || isAdmin || allowedPaths.includes(req.path)) return next();
-  if (req.method === 'POST' && req.path === '/iscrizioni') return next();
+  if (req.method === 'POST' && (req.path === '/iscrizioni' || req.path === '/kids')) return next();
   if (req.query.ok === '1') return next();
   return res.redirect('/ingresso');
 });
@@ -190,6 +220,80 @@ app.get('/', async (req, res, next) => {
 app.get('/iscrizioni', async (req, res, next) => {
   try {
     return renderIscrizioniPage(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/kids', async (req, res, next) => {
+  try {
+    const media = await getMediaMap();
+    res.render('kids', {
+      title: 'Kids - Summer Palio',
+      media,
+      formData: {},
+      errors: []
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/kids', async (req, res, next) => {
+  try {
+    const {
+      child_full_name,
+      child_birth_date,
+      child_tax_code,
+      parent_full_name,
+      parent_tax_code,
+      parent_email,
+      parent_phone,
+      privacy_consent,
+      media_consent
+    } = req.body;
+
+    const errors = [];
+    if (!child_full_name?.trim()) errors.push('Inserisci nome e cognome del bambino.');
+    if (!child_birth_date) errors.push('Inserisci la data di nascita del bambino.');
+    if (!child_tax_code?.trim()) errors.push('Inserisci il codice fiscale del bambino.');
+    if (!parent_full_name?.trim()) errors.push('Inserisci nome e cognome del genitore/tutore.');
+    if (!parent_tax_code?.trim()) errors.push('Inserisci il codice fiscale del genitore/tutore.');
+    if (!parent_email?.trim()) errors.push('Inserisci la mail del genitore/tutore.');
+    if (!parent_phone?.trim()) errors.push('Inserisci il numero cellulare del genitore/tutore.');
+    if (privacy_consent !== 'yes') errors.push('Devi accettare il trattamento dei dati personali.');
+
+    if (errors.length) {
+      const media = await getMediaMap();
+      return res.status(400).render('kids', {
+        title: 'Kids - Summer Palio',
+        media,
+        formData: req.body,
+        errors
+      });
+    }
+
+    await pool.query(
+      `INSERT INTO kids_registrations (
+        child_full_name, child_birth_date, child_tax_code,
+        parent_full_name, parent_tax_code, parent_email, parent_phone,
+        privacy_consent, media_consent
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [
+        child_full_name.trim(),
+        child_birth_date,
+        child_tax_code.trim(),
+        parent_full_name.trim(),
+        parent_tax_code.trim(),
+        parent_email.trim(),
+        parent_phone.trim(),
+        privacy_consent,
+        media_consent === 'yes' ? 'yes' : 'no'
+      ]
+    );
+
+    setFlash(req, 'success', 'Iscrizione Kids inviata correttamente.');
+    res.redirect('/kids?ok=1');
   } catch (err) {
     next(err);
   }
@@ -346,24 +450,26 @@ app.post('/admin/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/admin/login'));
 });
 
-async function renderAdmin(req, res, next, editItem = null) {
+async function renderAdmin(req, res, next, editItem = null, editKidItem = null) {
   try {
     const registrations = await pool.query(`
       SELECT r.*, s.name AS sport_name, s.price AS sport_price
       FROM registrations r
       JOIN sports s ON s.id = r.sport_id
+      WHERE LOWER(s.name) <> 'corsa'
       ORDER BY r.created_at DESC
     `);
-    const sports = await pool.query('SELECT * FROM sports ORDER BY name');
+    const kidsRegistrations = await pool.query('SELECT * FROM kids_registrations ORDER BY created_at DESC');
+    const sports = await pool.query("SELECT * FROM sports WHERE LOWER(name) <> 'corsa' ORDER BY name");
     const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY id DESC');
     const regulations = await pool.query('SELECT * FROM regolamenti ORDER BY id DESC');
     const news = await pool.query('SELECT * FROM news ORDER BY created_at DESC, id DESC');
     const settings = await getSettingsMap();
     const media = await getMediaMap();
     res.render('admin-dashboard', {
-      title: 'Pannello Admin', registrations: registrations.rows, sports: sports.rows,
+      title: 'Pannello Admin', registrations: registrations.rows, kidsRegistrations: kidsRegistrations.rows, sports: sports.rows,
       sponsors: sponsors.rows, regulations: regulations.rows, news: news.rows,
-      media, settings, editItem
+      media, settings, editItem, editKidItem
     });
   } catch (err) {
     next(err);
@@ -387,106 +493,11 @@ app.get('/admin/registrations/:id/edit', requireAuth, async (req, res, next) => 
 
 app.post('/admin/registrations/:id/update', requireAuth, async (req, res, next) => {
   try {
-    const {
-      full_name,
-      birth_date,
-      phone,
-      email,
-      rione,
-      sport_id,
-      notes,
-      player1_full_name,
-      player1_birth_date,
-      player1_tax_code,
-      player1_phone,
-      player1_rione_criteria,
-      player1_rione_address,
-      player1_shirt,
-      player1_shirt_size,
-      player2_full_name,
-      player2_birth_date,
-      player2_tax_code,
-      player2_phone,
-      player2_rione_criteria,
-      player2_rione_address,
-      player2_shirt,
-      player2_shirt_size,
-      fee_confirmation,
-      terms_rione_check,
-      terms_organizer_confirmation,
-      terms_privacy,
-      terms_images,
-      terms_liability
-    } = req.body;
-
+    const { full_name, birth_date, phone, email, rione, sport_id, notes } = req.body;
     await pool.query(
-      `UPDATE registrations
-       SET
-        full_name=$1,
-        birth_date=$2,
-        phone=$3,
-        email=$4,
-        rione=$5,
-        sport_id=$6,
-        notes=$7,
-        player1_full_name=$8,
-        player1_birth_date=$9,
-        player1_tax_code=$10,
-        player1_phone=$11,
-        player1_rione_criteria=$12,
-        player1_rione_address=$13,
-        player1_shirt=$14,
-        player1_shirt_size=$15,
-        player2_full_name=$16,
-        player2_birth_date=$17,
-        player2_tax_code=$18,
-        player2_phone=$19,
-        player2_rione_criteria=$20,
-        player2_rione_address=$21,
-        player2_shirt=$22,
-        player2_shirt_size=$23,
-        fee_confirmation=$24,
-        terms_rione_check=$25,
-        terms_organizer_confirmation=$26,
-        terms_privacy=$27,
-        terms_images=$28,
-        terms_liability=$29,
-        updated_at=NOW()
-       WHERE id=$30`,
-      [
-        (player1_full_name && player1_full_name.trim()) || (full_name && full_name.trim()) || null,
-        player1_birth_date || birth_date || null,
-        (player1_phone && player1_phone.trim()) || (phone && phone.trim()) || null,
-        email || null,
-        rione || null,
-        sport_id || null,
-        notes || null,
-        player1_full_name || null,
-        player1_birth_date || null,
-        player1_tax_code || null,
-        player1_phone || null,
-        player1_rione_criteria || null,
-        player1_rione_address || null,
-        player1_shirt || null,
-        player1_shirt_size || null,
-        player2_full_name || null,
-        player2_birth_date || null,
-        player2_tax_code || null,
-        player2_phone || null,
-        player2_rione_criteria || null,
-        player2_rione_address || null,
-        player2_shirt || null,
-        player2_shirt_size || null,
-        fee_confirmation || null,
-        terms_rione_check || null,
-        terms_organizer_confirmation || null,
-        terms_privacy || null,
-        terms_images || null,
-        terms_liability || null,
-        req.params.id
-      ]
+      `UPDATE registrations SET full_name=$1, birth_date=$2, phone=$3, email=$4, rione=$5, sport_id=$6, notes=$7, updated_at=NOW() WHERE id=$8`,
+      [full_name, birth_date || null, phone, email, rione, sport_id, notes || null, req.params.id]
     );
-
     setFlash(req, 'success', 'Iscrizione aggiornata con successo.');
     res.redirect('/admin');
   } catch (err) {
@@ -494,10 +505,81 @@ app.post('/admin/registrations/:id/update', requireAuth, async (req, res, next) 
   }
 });
 
-app.post('/admin/registrations/:id/delete' , requireAuth, async (req, res, next) => {
+app.post('/admin/registrations/:id/delete', requireAuth, async (req, res, next) => {
   try {
     await pool.query('DELETE FROM registrations WHERE id = $1', [req.params.id]);
     setFlash(req, 'success', 'Iscrizione eliminata.');
+    res.redirect('/admin');
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/admin/kids/:id/edit', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM kids_registrations WHERE id = $1', [req.params.id]);
+    if (!rows[0]) {
+      setFlash(req, 'error', 'Iscrizione Kids non trovata.');
+      return res.redirect('/admin');
+    }
+    return renderAdmin(req, res, next, null, rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/admin/kids/:id/update', requireAuth, async (req, res, next) => {
+  try {
+    const {
+      child_full_name,
+      child_birth_date,
+      child_tax_code,
+      parent_full_name,
+      parent_tax_code,
+      parent_email,
+      parent_phone,
+      privacy_consent,
+      media_consent
+    } = req.body;
+
+    await pool.query(
+      `UPDATE kids_registrations SET
+        child_full_name=$1,
+        child_birth_date=$2,
+        child_tax_code=$3,
+        parent_full_name=$4,
+        parent_tax_code=$5,
+        parent_email=$6,
+        parent_phone=$7,
+        privacy_consent=$8,
+        media_consent=$9,
+        updated_at=NOW()
+      WHERE id=$10`,
+      [
+        child_full_name,
+        child_birth_date || null,
+        child_tax_code,
+        parent_full_name,
+        parent_tax_code,
+        parent_email,
+        parent_phone,
+        privacy_consent === 'yes' ? 'yes' : 'no',
+        media_consent === 'yes' ? 'yes' : 'no',
+        req.params.id
+      ]
+    );
+
+    setFlash(req, 'success', 'Iscrizione Kids aggiornata.');
+    res.redirect('/admin');
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/admin/kids/:id/delete', requireAuth, async (req, res, next) => {
+  try {
+    await pool.query('DELETE FROM kids_registrations WHERE id = $1', [req.params.id]);
+    setFlash(req, 'success', 'Iscrizione Kids eliminata.');
     res.redirect('/admin');
   } catch (err) {
     next(err);
@@ -707,6 +789,51 @@ app.get('/admin/export/excel', requireAuth, async (req, res, next) => {
     }
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename="iscrizioni-palio-divise-per-sport.xlsx"');
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+app.get('/admin/export/kids', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM kids_registrations ORDER BY child_full_name ASC');
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Iscrizioni Kids');
+
+    sheet.columns = [
+      { header: 'NOME COGNOME BAMBINO', key: 'child_full_name', width: 30 },
+      { header: 'DATA NASCITA BAMBINO', key: 'child_birth_date', width: 20 },
+      { header: 'CF BAMBINO', key: 'child_tax_code', width: 22 },
+      { header: 'NOME COGNOME GENITORE', key: 'parent_full_name', width: 30 },
+      { header: 'CF GENITORE', key: 'parent_tax_code', width: 22 },
+      { header: 'EMAIL GENITORE', key: 'parent_email', width: 30 },
+      { header: 'CELLULARE GENITORE', key: 'parent_phone', width: 22 },
+      { header: 'CONSENSO PRIVACY', key: 'privacy_consent', width: 18 },
+      { header: 'CONSENSO FOTO VIDEO', key: 'media_consent', width: 22 }
+    ];
+
+    rows.forEach(row => {
+      sheet.addRow({
+        child_full_name: row.child_full_name || '',
+        child_birth_date: row.child_birth_date ? new Date(row.child_birth_date).toLocaleDateString('it-IT') : '',
+        child_tax_code: row.child_tax_code || '',
+        parent_full_name: row.parent_full_name || '',
+        parent_tax_code: row.parent_tax_code || '',
+        parent_email: row.parent_email || '',
+        parent_phone: row.parent_phone || '',
+        privacy_consent: row.privacy_consent === 'yes' ? 'SI' : 'NO',
+        media_consent: row.media_consent === 'yes' ? 'SI' : 'NO'
+      });
+    });
+
+    sheet.getRow(1).font = { bold: true };
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="iscrizioni-kids-summer-palio.xlsx"');
     await workbook.xlsx.write(res);
     res.end();
   } catch (err) {

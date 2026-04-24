@@ -1,18 +1,14 @@
 <%- include('partials/header') %>
 
 <style>
-  .admin-tools-grid {
+  .admin-accordion-wrap {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 18px;
     align-items: start;
   }
-
-  .admin-tools-grid > .card {
-    overflow: hidden;
-  }
-
-  .admin-collapse-head {
+  .admin-accordion summary {
+    list-style: none;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -20,37 +16,13 @@
     gap: 12px;
     color: var(--green);
     font-weight: 900;
+    font-size: 20px;
   }
-
-  .admin-collapse-head h3 {
-    margin: 0 !important;
-    color: var(--green) !important;
-  }
-
-  .admin-collapse-arrow {
-    color: var(--yellow);
-    font-size: 22px;
-    transition: transform .2s ease;
-  }
-
-  .admin-collapse-head.is-open .admin-collapse-arrow {
-    transform: rotate(90deg);
-  }
-
-  .admin-collapse-content {
-    display: none;
-    margin-top: 18px;
-  }
-
-  .admin-collapse-content.is-open {
-    display: block;
-  }
-
-  @media (max-width: 900px) {
-    .admin-tools-grid {
-      grid-template-columns: 1fr;
-    }
-  }
+  .admin-accordion summary::-webkit-details-marker { display: none; }
+  .accordion-arrow { color: var(--yellow); font-size: 22px; transition: transform .2s ease; }
+  .admin-accordion[open] .accordion-arrow { transform: rotate(90deg); }
+  .admin-accordion-content { margin-top: 18px; }
+  @media (max-width: 900px) { .admin-accordion-wrap { grid-template-columns: 1fr; } }
 </style>
 
 <section class="section">
@@ -58,11 +30,12 @@
     <div class="section-title">
       <small>Pannello amministrazione</small>
       <h2>Pannello Admin</h2>
-      <p>Qui puoi gestire iscrizioni, sport, contenuti, sponsor, regolamenti, novità, video ed Excel.</p>
+      <p>Qui puoi gestire iscrizioni sport, iscrizioni Kids, sport, contenuti, sponsor, regolamenti, novità, video ed Excel.</p>
     </div>
 
     <div class="top-actions" style="margin-bottom:18px">
-      <a class="button button-yellow" href="/admin/export/excel">Esporta Excel</a>
+      <a class="button button-yellow" href="/admin/export/excel">Esporta Excel Sport</a>
+      <a class="button button-yellow" href="/admin/export/kids">Esporta Excel Kids</a>
       <form class="inline-form" method="post" action="/admin/logout">
         <button class="button button-green" type="submit">Logout</button>
       </form>
@@ -70,154 +43,65 @@
 
     <% if (editItem) { %>
       <div class="card" style="margin-bottom:20px">
-        <h3 style="margin-top:0;color:var(--green)">Modifica iscrizione #<%= editItem.id %></h3>
-
+        <h3 style="margin-top:0;color:var(--green)">Modifica iscrizione sport #<%= editItem.id %></h3>
         <form method="post" action="/admin/registrations/<%= editItem.id %>/update">
           <div class="form-grid">
-            <div>
-              <label>Nome e cognome principale</label>
-              <input name="full_name" value="<%= editItem.full_name || '' %>" required>
-            </div>
-
-            <div>
-              <label>Data di nascita principale</label>
-              <input type="date" name="birth_date" value="<%= editItem.birth_date ? new Date(editItem.birth_date).toISOString().slice(0,10) : '' %>">
-            </div>
-
-            <div>
-              <label>Telefono principale</label>
-              <input name="phone" value="<%= editItem.phone || '' %>" required>
-            </div>
-
-            <div>
-              <label>Email</label>
-              <input type="email" name="email" value="<%= editItem.email || '' %>" required>
-            </div>
-
-            <div>
-              <label>Rione</label>
-              <input name="rione" value="<%= editItem.rione || '' %>" required>
-            </div>
-
+            <div><label>Nome e cognome</label><input name="full_name" value="<%= editItem.full_name %>" required></div>
+            <div><label>Data di nascita</label><input type="date" name="birth_date" value="<%= editItem.birth_date ? new Date(editItem.birth_date).toISOString().slice(0,10) : '' %>"></div>
+            <div><label>Telefono</label><input name="phone" value="<%= editItem.phone %>" required></div>
+            <div><label>Email</label><input type="email" name="email" value="<%= editItem.email %>" required></div>
+            <div><label>Rione</label><input name="rione" value="<%= editItem.rione %>" required></div>
             <div>
               <label>Sport</label>
               <select name="sport_id" required>
                 <% sports.forEach(function(sport){ %>
-                  <% if (String(sport.name || '').toLowerCase() !== 'corsa') { %>
-                    <option value="<%= sport.id %>" <%= Number(editItem.sport_id)===Number(sport.id)?'selected':'' %>><%= sport.name %></option>
-                  <% } %>
+                  <option value="<%= sport.id %>" <%= Number(editItem.sport_id)===Number(sport.id)?'selected':'' %>><%= sport.name %></option>
                 <% }) %>
               </select>
             </div>
           </div>
-
-          <div class="card" style="margin-top:18px">
-            <h4 style="margin-top:0;color:var(--green)">1° giocatore</h4>
-            <div class="form-grid">
-              <div><label>Nome e Cognome</label><input name="player1_full_name" value="<%= editItem.player1_full_name || editItem.full_name || '' %>"></div>
-              <div><label>Data di nascita</label><input type="date" name="player1_birth_date" value="<%= editItem.player1_birth_date ? new Date(editItem.player1_birth_date).toISOString().slice(0,10) : '' %>"></div>
-              <div><label>Codice fiscale</label><input name="player1_tax_code" value="<%= editItem.player1_tax_code || '' %>"></div>
-              <div><label>Telefono</label><input name="player1_phone" value="<%= editItem.player1_phone || editItem.phone || '' %>"></div>
-              <div>
-                <label>Criterio Rione</label>
-                <select name="player1_rione_criteria">
-                  <option value="">Seleziona</option>
-                  <% ['Residenza','Domicilio','Legame familiare','Altro criterio approvato'].forEach(function(v){ %>
-                    <option value="<%= v %>" <%= editItem.player1_rione_criteria === v ? 'selected' : '' %>><%= v %></option>
-                  <% }) %>
-                </select>
-              </div>
-              <div><label>Indirizzo appartenenza Rione</label><input name="player1_rione_address" value="<%= editItem.player1_rione_address || '' %>"></div>
-              <div>
-                <label>Maglietta</label>
-                <select name="player1_shirt">
-                  <option value="no" <%= editItem.player1_shirt === 'no' ? 'selected' : '' %>>NO</option>
-                  <option value="yes" <%= editItem.player1_shirt === 'yes' ? 'selected' : '' %>>SI</option>
-                </select>
-              </div>
-              <div>
-                <label>Taglia</label>
-                <select name="player1_shirt_size">
-                  <option value="">Nessuna</option>
-                  <% ['XS','S','M','L','XL','XXL'].forEach(function(v){ %>
-                    <option value="<%= v %>" <%= editItem.player1_shirt_size === v ? 'selected' : '' %>><%= v %></option>
-                  <% }) %>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" style="margin-top:18px">
-            <h4 style="margin-top:0;color:var(--green)">2° giocatore</h4>
-            <div class="form-grid">
-              <div><label>Nome e Cognome</label><input name="player2_full_name" value="<%= editItem.player2_full_name || '' %>"></div>
-              <div><label>Data di nascita</label><input type="date" name="player2_birth_date" value="<%= editItem.player2_birth_date ? new Date(editItem.player2_birth_date).toISOString().slice(0,10) : '' %>"></div>
-              <div><label>Codice fiscale</label><input name="player2_tax_code" value="<%= editItem.player2_tax_code || '' %>"></div>
-              <div><label>Telefono</label><input name="player2_phone" value="<%= editItem.player2_phone || '' %>"></div>
-              <div>
-                <label>Criterio Rione</label>
-                <select name="player2_rione_criteria">
-                  <option value="">Seleziona</option>
-                  <% ['Residenza','Domicilio','Legame familiare','Altro criterio approvato'].forEach(function(v){ %>
-                    <option value="<%= v %>" <%= editItem.player2_rione_criteria === v ? 'selected' : '' %>><%= v %></option>
-                  <% }) %>
-                </select>
-              </div>
-              <div><label>Indirizzo appartenenza Rione</label><input name="player2_rione_address" value="<%= editItem.player2_rione_address || '' %>"></div>
-              <div>
-                <label>Maglietta</label>
-                <select name="player2_shirt">
-                  <option value="" <%= !editItem.player2_shirt ? 'selected' : '' %>>Nessuna</option>
-                  <option value="no" <%= editItem.player2_shirt === 'no' ? 'selected' : '' %>>NO</option>
-                  <option value="yes" <%= editItem.player2_shirt === 'yes' ? 'selected' : '' %>>SI</option>
-                </select>
-              </div>
-              <div>
-                <label>Taglia</label>
-                <select name="player2_shirt_size">
-                  <option value="">Nessuna</option>
-                  <% ['XS','S','M','L','XL','XXL'].forEach(function(v){ %>
-                    <option value="<%= v %>" <%= editItem.player2_shirt_size === v ? 'selected' : '' %>><%= v %></option>
-                  <% }) %>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" style="margin-top:18px">
-            <h4 style="margin-top:0;color:var(--green)">Conferme</h4>
-            <div class="form-grid">
-              <% const yesNo = ['yes','no']; %>
-              <div><label>Conferma quota</label><select name="fee_confirmation"><% yesNo.forEach(function(v){ %><option value="<%= v %>" <%= editItem.fee_confirmation === v ? 'selected' : '' %>><%= v === 'yes' ? 'SI' : 'NO' %></option><% }) %></select></div>
-              <div><label>Controllo Rione</label><select name="terms_rione_check"><% yesNo.forEach(function(v){ %><option value="<%= v %>" <%= editItem.terms_rione_check === v ? 'selected' : '' %>><%= v === 'yes' ? 'SI' : 'NO' %></option><% }) %></select></div>
-              <div><label>Conferma organizzatori</label><select name="terms_organizer_confirmation"><% yesNo.forEach(function(v){ %><option value="<%= v %>" <%= editItem.terms_organizer_confirmation === v ? 'selected' : '' %>><%= v === 'yes' ? 'SI' : 'NO' %></option><% }) %></select></div>
-              <div><label>Privacy</label><select name="terms_privacy"><% yesNo.forEach(function(v){ %><option value="<%= v %>" <%= editItem.terms_privacy === v ? 'selected' : '' %>><%= v === 'yes' ? 'SI' : 'NO' %></option><% }) %></select></div>
-              <div><label>Immagini</label><select name="terms_images"><% yesNo.forEach(function(v){ %><option value="<%= v %>" <%= editItem.terms_images === v ? 'selected' : '' %>><%= v === 'yes' ? 'SI' : 'NO' %></option><% }) %></select></div>
-              <div><label>Responsabilità</label><select name="terms_liability"><% yesNo.forEach(function(v){ %><option value="<%= v %>" <%= editItem.terms_liability === v ? 'selected' : '' %>><%= v === 'yes' ? 'SI' : 'NO' %></option><% }) %></select></div>
-            </div>
-          </div>
-
           <div style="margin-top:12px"><label>Note</label><textarea name="notes"><%= editItem.notes || '' %></textarea></div>
-
-          <div class="top-actions" style="margin-top:16px">
-            <button class="button button-yellow" type="submit">Salva modifica</button>
-            <a class="button button-green" href="/admin">Annulla</a>
-          </div>
+          <div class="top-actions" style="margin-top:16px"><button class="button button-yellow" type="submit">Salva modifica</button><a class="button button-green" href="/admin">Annulla</a></div>
         </form>
+      </div>
+    <% } %>
 
-        <form method="post" action="/admin/registrations/<%= editItem.id %>/delete" onsubmit="return confirm('Eliminare questa iscrizione?')" style="margin-top:14px">
-          <button class="button" style="background:#fee2e2;color:#991b1b;padding:10px 14px">Elimina iscrizione</button>
+    <% if (editKidItem) { %>
+      <div class="card" style="margin-bottom:20px">
+        <h3 style="margin-top:0;color:var(--green)">Modifica iscrizione Kids #<%= editKidItem.id %></h3>
+        <form method="post" action="/admin/kids/<%= editKidItem.id %>/update">
+          <h4 style="color:var(--green);">Dati bambino</h4>
+          <div class="form-grid">
+            <div><label>Nome e cognome bambino</label><input name="child_full_name" value="<%= editKidItem.child_full_name || '' %>" required></div>
+            <div><label>Data di nascita bambino</label><input type="date" name="child_birth_date" value="<%= editKidItem.child_birth_date ? new Date(editKidItem.child_birth_date).toISOString().slice(0,10) : '' %>" required></div>
+            <div><label>Codice fiscale bambino</label><input name="child_tax_code" value="<%= editKidItem.child_tax_code || '' %>" required></div>
+          </div>
+
+          <h4 style="color:var(--green); margin-top:18px;">Dati genitore / tutore</h4>
+          <div class="form-grid">
+            <div><label>Nome e cognome genitore</label><input name="parent_full_name" value="<%= editKidItem.parent_full_name || '' %>" required></div>
+            <div><label>Codice fiscale genitore</label><input name="parent_tax_code" value="<%= editKidItem.parent_tax_code || '' %>" required></div>
+            <div><label>Email genitore</label><input type="email" name="parent_email" value="<%= editKidItem.parent_email || '' %>" required></div>
+            <div><label>Cellulare genitore</label><input name="parent_phone" value="<%= editKidItem.parent_phone || '' %>" required></div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <label class="checkbox"><input type="checkbox" name="privacy_consent" value="yes" <%= editKidItem.privacy_consent === 'yes' ? 'checked' : '' %> required> Consenso privacy</label>
+            <label class="checkbox"><input type="checkbox" name="media_consent" value="yes" <%= editKidItem.media_consent === 'yes' ? 'checked' : '' %>> Consenso foto/video minore</label>
+          </div>
+
+          <div class="top-actions" style="margin-top:16px"><button class="button button-yellow" type="submit">Salva modifica Kids</button><a class="button button-green" href="/admin">Annulla</a></div>
         </form>
       </div>
     <% } %>
 
     <div class="card" style="margin-bottom:22px">
-      <h3 style="margin-top:0;color:var(--green)">Elenco iscrizioni</h3>
+      <h3 style="margin-top:0;color:var(--green)">Elenco iscrizioni sport</h3>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Nome</th><th>Rione</th><th>Sport</th><th>Contatti</th><th>Azioni</th></tr></thead>
           <tbody>
-            <% if (!registrations.length) { %><tr><td colspan="5">Nessuna iscrizione presente.</td></tr><% } %>
+            <% if (!registrations.length) { %><tr><td colspan="5">Nessuna iscrizione sport presente.</td></tr><% } %>
             <% registrations.forEach(function(item){ %>
               <tr>
                 <td><strong><%= item.full_name %></strong><br><span class="small">Creato il <%= new Date(item.created_at).toLocaleString('it-IT') %></span><% if (item.notes) { %><br><span class="small"><%= item.notes %></span><% } %></td>
@@ -232,66 +116,42 @@
       </div>
     </div>
 
-    <div class="admin-tools-grid">
-      <div class="card"><h3 style="margin-top:0;color:var(--green)">Impostazioni generali</h3><form method="post" action="/admin/settings/update"><div style="margin-bottom:12px"><label>Iscrizioni aperte</label><select name="registrations_open"><option value="true" <%= settings.registrations_open === 'true' ? 'selected' : '' %>>Aperte</option><option value="false" <%= settings.registrations_open !== 'true' ? 'selected' : '' %>>Chiuse</option></select></div><div style="margin-bottom:12px"><label>Email</label><input name="contact_email" value="<%= settings.contact_email || '' %>"></div><div style="margin-bottom:12px"><label>Facebook</label><input name="contact_facebook" value="<%= settings.contact_facebook || 'Il Palio della Torre - Torneo dei Rioni Leverano' %>"></div><div style="margin-bottom:14px"><label>Instagram</label><input name="contact_instagram" value="<%= settings.contact_instagram || 'ilpaliodellatorreleverano' %>"></div><div style="margin-bottom:14px"><label>Regolamento iniziale accesso sito</label><textarea name="site_regolamento_accesso" rows="10" placeholder="Scrivi qui il regolamento che deve apparire prima dell'accesso al sito"><%= settings.site_regolamento_accesso || '' %></textarea></div><button class="button button-yellow" type="submit">Salva impostazioni</button></form></div>
+    <div class="card" style="margin-bottom:22px">
+      <h3 style="margin-top:0;color:var(--green)">Elenco iscrizioni Kids</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Bambino</th><th>Genitore</th><th>Contatti</th><th>Consensi</th><th>Azioni</th></tr></thead>
+          <tbody>
+            <% if (!kidsRegistrations || !kidsRegistrations.length) { %><tr><td colspan="5">Nessuna iscrizione Kids presente.</td></tr><% } %>
+            <% (kidsRegistrations || []).forEach(function(item){ %>
+              <tr>
+                <td><strong><%= item.child_full_name %></strong><br><span class="small"><%= item.child_birth_date ? new Date(item.child_birth_date).toLocaleDateString('it-IT') : '' %></span><br><span class="small"><%= item.child_tax_code %></span></td>
+                <td><strong><%= item.parent_full_name %></strong><br><span class="small"><%= item.parent_tax_code %></span></td>
+                <td><%= item.parent_phone %><br><span class="small"><%= item.parent_email %></span></td>
+                <td>Privacy: <%= item.privacy_consent === 'yes' ? 'SI' : 'NO' %><br><span class="small">Foto/video: <%= item.media_consent === 'yes' ? 'SI' : 'NO' %></span></td>
+                <td><div class="actions"><a class="button button-green" href="/admin/kids/<%= item.id %>/edit" style="padding:10px 14px">Modifica</a><form class="inline-form" method="post" action="/admin/kids/<%= item.id %>/delete" onsubmit="return confirm('Eliminare questa iscrizione Kids?')"><button class="button" style="background:#fee2e2;color:#991b1b;padding:10px 14px">Elimina</button></form></div></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-      <div class="card"><h3 style="margin-top:0;color:var(--green)">NOVITÀ</h3><form method="post" action="/admin/news/create" enctype="multipart/form-data"><div style="margin-bottom:12px"><label>Titolo locandina (facoltativo)</label><input name="titolo"></div><div style="margin-bottom:14px"><label>Immagine locandina</label><input type="file" name="image" accept="image/*" required></div><button class="button button-yellow" type="submit">Carica locandina</button></form><% if (news && news.length) { %><div style="margin-top:18px"><% news.forEach(function(item){ %><div class="card" style="margin-top:12px;padding:16px"><% if (item.titolo) { %><div style="font-weight:800;margin-bottom:10px"><%= item.titolo %></div><% } %><img src="<%= item.image_url %>" alt="Locandina" style="width:100%;max-height:220px;object-fit:contain"><form method="post" action="/admin/news/<%= item.id %>/delete" onsubmit="return confirm('Eliminare questa locandina?')" style="margin-top:12px"><button class="button button-green" type="submit">Elimina locandina</button></form></div><% }) %></div><% } %></div>
+    <div class="admin-accordion-wrap">
+      <details class="card admin-accordion"><summary><span>Impostazioni generali</span><span class="accordion-arrow">▶</span></summary><div class="admin-accordion-content"><form method="post" action="/admin/settings/update"><div style="margin-bottom:12px"><label>Iscrizioni aperte</label><select name="registrations_open"><option value="true" <%= settings.registrations_open === 'true' ? 'selected' : '' %>>Aperte</option><option value="false" <%= settings.registrations_open !== 'true' ? 'selected' : '' %>>Chiuse</option></select></div><div style="margin-bottom:12px"><label>Email</label><input name="contact_email" value="<%= settings.contact_email || '' %>"></div><div style="margin-bottom:12px"><label>Facebook</label><input name="contact_facebook" value="<%= settings.contact_facebook || 'Il Palio della Torre - Torneo dei Rioni Leverano' %>"></div><div style="margin-bottom:14px"><label>Instagram</label><input name="contact_instagram" value="<%= settings.contact_instagram || 'ilpaliodellatorreleverano' %>"></div><div style="margin-bottom:14px"><label>Regolamento iniziale accesso sito</label><textarea name="site_regolamento_accesso" rows="10" placeholder="Scrivi qui il regolamento che deve apparire prima dell'accesso al sito"><%= settings.site_regolamento_accesso || '' %></textarea></div><button class="button button-yellow" type="submit">Salva impostazioni</button></form></div></details>
 
-      <div class="card"><h3 style="margin-top:0;color:var(--green)">Video homepage</h3><form method="post" action="/admin/media/video" enctype="multipart/form-data"><div style="margin-bottom:14px"><label>Video pubblicitario</label><input type="file" name="video" accept="video/mp4,video/webm,video/quicktime" required></div><button class="button button-yellow" type="submit">Carica video</button></form><% if (media && media.homepage_video_url) { %><div style="margin-top:16px" class="small">Video attuale caricato correttamente.</div><form method="post" action="/admin/media/video/delete" onsubmit="return confirm('Eliminare il video pubblicitario?')" style="margin-top:12px"><button class="button button-green" type="submit">Elimina video pubblicitario</button></form><% } %></div>
+      <details class="card admin-accordion"><summary><span>NOVITÀ</span><span class="accordion-arrow">▶</span></summary><div class="admin-accordion-content"><form method="post" action="/admin/news/create" enctype="multipart/form-data"><div style="margin-bottom:12px"><label>Titolo locandina (facoltativo)</label><input name="titolo"></div><div style="margin-bottom:14px"><label>Immagine locandina</label><input type="file" name="image" accept="image/*" required></div><button class="button button-yellow" type="submit">Carica locandina</button></form><% if (news && news.length) { %><div style="margin-top:18px"><% news.forEach(function(item){ %><div class="card" style="margin-top:12px;padding:16px"><% if (item.titolo) { %><div style="font-weight:800;margin-bottom:10px"><%= item.titolo %></div><% } %><img src="<%= item.image_url %>" alt="Locandina" style="width:100%;max-height:220px;object-fit:contain"><form method="post" action="/admin/news/<%= item.id %>/delete" onsubmit="return confirm('Eliminare questa locandina?')" style="margin-top:12px"><button class="button button-green" type="submit">Elimina locandina</button></form></div><% }) %></div><% } %></div></details>
 
-      <div class="card"><h3 style="margin-top:0;color:var(--green)">Aggiungi sport</h3><form method="post" action="/admin/sports/create"><div style="margin-bottom:12px"><label>Nome sport</label><input name="name" required></div><div style="margin-bottom:14px"><label>Prezzo</label><input type="number" step="0.01" min="0" name="price" value="0"></div><button class="button button-green" type="submit">Aggiungi</button></form></div>
+      <details class="card admin-accordion"><summary><span>Video homepage</span><span class="accordion-arrow">▶</span></summary><div class="admin-accordion-content"><form method="post" action="/admin/media/video" enctype="multipart/form-data"><div style="margin-bottom:14px"><label>Video pubblicitario</label><input type="file" name="video" accept="video/mp4,video/webm,video/quicktime" required></div><button class="button button-yellow" type="submit">Carica video</button></form><% if (media && media.homepage_video_url) { %><div style="margin-top:16px" class="small">Video attuale caricato correttamente.</div><form method="post" action="/admin/media/video/delete" onsubmit="return confirm('Eliminare il video pubblicitario?')" style="margin-top:12px"><button class="button button-green" type="submit">Elimina video pubblicitario</button></form><% } %></div></details>
 
-      <div class="card"><h3 style="margin-top:0;color:var(--green)">Gestione sport</h3><% sports.forEach(function(sport){ %><form method="post" action="/admin/sports/<%= sport.id %>/update" class="sport-row"><div style="margin-bottom:10px"><label>Nome</label><input name="name" value="<%= sport.name %>" required></div><div style="margin-bottom:10px"><label>Prezzo</label><input type="number" step="0.01" min="0" name="price" value="<%= Number(sport.price).toFixed(2) %>" required></div><div style="margin-bottom:14px;display:flex;align-items:center;gap:10px"><input type="checkbox" name="is_open" <%= sport.is_open ? 'checked' : '' %> style="width:auto"><span>Sport aperto</span></div><button class="button button-yellow" type="submit">Salva sport</button></form><% }) %></div>
+      <details class="card admin-accordion"><summary><span>Aggiungi sport</span><span class="accordion-arrow">▶</span></summary><div class="admin-accordion-content"><form method="post" action="/admin/sports/create"><div style="margin-bottom:12px"><label>Nome sport</label><input name="name" required></div><div style="margin-bottom:14px"><label>Prezzo</label><input type="number" step="0.01" min="0" name="price" value="0"></div><button class="button button-green" type="submit">Aggiungi</button></form></div></details>
 
-      <div class="card"><h3 style="margin-top:0;color:var(--green)">Carica sponsor</h3><form method="post" action="/admin/sponsors/create" enctype="multipart/form-data"><div style="margin-bottom:12px"><label>Nome sponsor (facoltativo)</label><input name="nome"></div><div style="margin-bottom:14px"><label>Logo sponsor</label><input type="file" name="logo" accept="image/*" required></div><button class="button button-yellow" type="submit">Carica sponsor</button></form><% if (sponsors && sponsors.length) { %><div style="margin-top:18px"><% sponsors.forEach(function(sponsor){ %><div class="card" style="margin-top:12px;padding:16px;text-align:center"><img src="<%= sponsor.logo_url %>" alt="Sponsor" style="max-width:100%;max-height:80px;object-fit:contain"><form method="post" action="/admin/sponsors/<%= sponsor.id %>/delete" onsubmit="return confirm('Eliminare questo sponsor?')" style="margin-top:12px"><button class="button button-green" type="submit">Elimina sponsor</button></form></div><% }) %></div><% } %></div>
+      <details class="card admin-accordion"><summary><span>Gestione sport</span><span class="accordion-arrow">▶</span></summary><div class="admin-accordion-content"><% sports.forEach(function(sport){ %><form method="post" action="/admin/sports/<%= sport.id %>/update" class="sport-row"><div style="margin-bottom:10px"><label>Nome</label><input name="name" value="<%= sport.name %>" required></div><div style="margin-bottom:10px"><label>Prezzo</label><input type="number" step="0.01" min="0" name="price" value="<%= Number(sport.price).toFixed(2) %>" required></div><div style="margin-bottom:14px;display:flex;align-items:center;gap:10px"><input type="checkbox" name="is_open" <%= sport.is_open ? 'checked' : '' %> style="width:auto"><span>Sport aperto</span></div><button class="button button-yellow" type="submit">Salva sport</button></form><% }) %></div></details>
 
-      <div class="card"><h3 style="margin-top:0;color:var(--green)">Carica regolamento PDF</h3><form method="post" action="/admin/regolamenti/create" enctype="multipart/form-data"><div style="margin-bottom:12px"><label>Titolo regolamento</label><input name="titolo" placeholder="Es. Regolamento Padel" required></div><div style="margin-bottom:14px"><label>File PDF</label><input type="file" name="pdf" accept="application/pdf" required></div><button class="button button-yellow" type="submit">Carica regolamento</button></form><% if (regulations && regulations.length) { %><div style="margin-top:18px"><% regulations.forEach(function(reg){ %><div class="card" style="margin-top:12px;padding:16px"><strong><%= reg.titolo %></strong><div class="top-actions" style="margin-top:12px"><a class="button button-yellow" href="<%= reg.file_url %>" target="_blank" style="padding:10px 14px">Apri PDF</a><form class="inline-form" method="post" action="/admin/regolamenti/<%= reg.id %>/delete" onsubmit="return confirm('Eliminare questo regolamento?')"><button class="button button-green" type="submit" style="padding:10px 14px">Elimina</button></form></div></div><% }) %></div><% } %></div>
+      <details class="card admin-accordion"><summary><span>Carica sponsor</span><span class="accordion-arrow">▶</span></summary><div class="admin-accordion-content"><form method="post" action="/admin/sponsors/create" enctype="multipart/form-data"><div style="margin-bottom:12px"><label>Nome sponsor (facoltativo)</label><input name="nome"></div><div style="margin-bottom:14px"><label>Logo sponsor</label><input type="file" name="logo" accept="image/*" required></div><button class="button button-yellow" type="submit">Carica sponsor</button></form><% if (sponsors && sponsors.length) { %><div style="margin-top:18px"><% sponsors.forEach(function(sponsor){ %><div class="card" style="margin-top:12px;padding:16px;text-align:center"><img src="<%= sponsor.logo_url %>" alt="Sponsor" style="max-width:100%;max-height:80px;object-fit:contain"><form method="post" action="/admin/sponsors/<%= sponsor.id %>/delete" onsubmit="return confirm('Eliminare questo sponsor?')" style="margin-top:12px"><button class="button button-green" type="submit">Elimina sponsor</button></form></div><% }) %></div><% } %></div></details>
+
+      <details class="card admin-accordion"><summary><span>Carica regolamento PDF</span><span class="accordion-arrow">▶</span></summary><div class="admin-accordion-content"><form method="post" action="/admin/regolamenti/create" enctype="multipart/form-data"><div style="margin-bottom:12px"><label>Titolo regolamento</label><input name="titolo" placeholder="Es. Regolamento Padel" required></div><div style="margin-bottom:14px"><label>File PDF</label><input type="file" name="pdf" accept="application/pdf" required></div><button class="button button-yellow" type="submit">Carica regolamento</button></form><% if (regulations && regulations.length) { %><div style="margin-top:18px"><% regulations.forEach(function(reg){ %><div class="card" style="margin-top:12px;padding:16px"><strong><%= reg.titolo %></strong><div class="top-actions" style="margin-top:12px"><a class="button button-yellow" href="<%= reg.file_url %>" target="_blank" style="padding:10px 14px">Apri PDF</a><form class="inline-form" method="post" action="/admin/regolamenti/<%= reg.id %>/delete" onsubmit="return confirm('Eliminare questo regolamento?')"><button class="button button-green" type="submit" style="padding:10px 14px">Elimina</button></form></div></div><% }) %></div><% } %></div></details>
     </div>
   </div>
 </section>
-
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.admin-tools-grid > .card').forEach(function (card) {
-      const h3 = card.querySelector(':scope > h3');
-      if (!h3 || card.dataset.collapsibleReady === 'yes') return;
-      card.dataset.collapsibleReady = 'yes';
-
-      const header = document.createElement('div');
-      header.className = 'admin-collapse-head';
-
-      const title = document.createElement('h3');
-      title.textContent = h3.textContent;
-
-      const arrow = document.createElement('span');
-      arrow.className = 'admin-collapse-arrow';
-      arrow.textContent = '▶';
-
-      header.appendChild(title);
-      header.appendChild(arrow);
-
-      const content = document.createElement('div');
-      content.className = 'admin-collapse-content';
-
-      let node = h3.nextSibling;
-      const nodes = [];
-      while (node) {
-        nodes.push(node);
-        node = node.nextSibling;
-      }
-      nodes.forEach(function (n) { content.appendChild(n); });
-
-      h3.remove();
-      card.appendChild(header);
-      card.appendChild(content);
-
-      header.addEventListener('click', function () {
-        header.classList.toggle('is-open');
-        content.classList.toggle('is-open');
-      });
-    });
-  });
-</script>
-
 <%- include('partials/footer') %>

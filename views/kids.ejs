@@ -1,0 +1,80 @@
+<%- include('partials/header') %>
+
+<section class="section">
+  <div class="container" style="max-width:900px;">
+    <div class="section-title">
+      <small>Summer Palio</small>
+      <h2>KIDS</h2>
+      <p>Modulo di iscrizione bambini per il Summer Palio.</p>
+    </div>
+
+    <% if (errors && errors.length) { %>
+      <div class="notice notice-error">
+        <% errors.forEach(function(error) { %>
+          <div><%= error %></div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <div class="card">
+      <form method="POST" action="/kids">
+        <h3 style="margin-top:0;color:var(--green);">Dati bambino</h3>
+        <div class="form-grid">
+          <div>
+            <label>Nome e cognome bambino *</label>
+            <input name="child_full_name" value="<%= formData.child_full_name || '' %>" required>
+          </div>
+          <div>
+            <label>Data di nascita bambino *</label>
+            <input type="date" name="child_birth_date" value="<%= formData.child_birth_date || '' %>" required>
+          </div>
+          <div>
+            <label>Codice fiscale bambino *</label>
+            <input name="child_tax_code" value="<%= formData.child_tax_code || '' %>" required>
+          </div>
+        </div>
+
+        <h3 style="color:var(--green); margin-top:24px;">Dati genitore / tutore</h3>
+        <div class="form-grid">
+          <div>
+            <label>Nome e cognome genitore *</label>
+            <input name="parent_full_name" value="<%= formData.parent_full_name || '' %>" required>
+          </div>
+          <div>
+            <label>Codice fiscale genitore *</label>
+            <input name="parent_tax_code" value="<%= formData.parent_tax_code || '' %>" required>
+          </div>
+          <div>
+            <label>Email genitore *</label>
+            <input type="email" name="parent_email" value="<%= formData.parent_email || '' %>" required>
+          </div>
+          <div>
+            <label>Cellulare genitore *</label>
+            <input name="parent_phone" value="<%= formData.parent_phone || '' %>" required>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:20px; box-shadow:none; border:1px solid #e5e7eb;">
+          <h3 style="margin-top:0;color:var(--green);">Consensi</h3>
+
+          <label class="checkbox">
+            <input type="checkbox" name="privacy_consent" value="yes" required <%= formData.privacy_consent === 'yes' ? 'checked' : '' %> />
+            Autorizzo il trattamento dei dati personali.
+          </label>
+
+          <label class="checkbox">
+            <input type="checkbox" name="media_consent" value="yes" <%= formData.media_consent === 'yes' ? 'checked' : '' %> />
+            Autorizzo la pubblicazione di foto e video del minore sui canali social del Palio della Torre.
+          </label>
+        </div>
+
+        <div style="margin-top:18px;">
+          <button class="button button-yellow" type="submit">Invia iscrizione Kids</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/promo-video') %>
+<%- include('partials/footer') %>
