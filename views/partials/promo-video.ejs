@@ -8,7 +8,7 @@
   width: 100%;
   height: 100%;
   background: rgba(0,0,0,0.85);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 9999;
@@ -29,6 +29,7 @@
       cursor: pointer;
       font-weight: bold;
       display: none;
+      z-index: 10000;
     "
   >
     ✕
@@ -36,13 +37,13 @@
 
   <video
     id="videoAdv"
-    autoplay
     muted
     playsinline
     style="
       max-width: 90%;
       max-height: 90%;
       border-radius: 12px;
+      background:#000;
     "
   >
     <source src="<%= media.homepage_video_url %>" type="video/mp4">
@@ -50,38 +51,66 @@
 </div>
 
 <script>
-  function chiudiVideo() {
-    document.getElementById("videoPopup").style.display = "none";
-  }
+  (function () {
+    const INTERVALLO_PUBBLICITA = 120000; // 2 minuti
+    const STORAGE_KEY = "palio_last_video_time";
 
-  function apriVideo() {
     const popup = document.getElementById("videoPopup");
     const video = document.getElementById("videoAdv");
     const btn = document.getElementById("closeVideoBtn");
 
-    popup.style.display = "flex";
-    btn.style.display = "none";
+    if (!popup || !video || !btn) return;
 
-    if (video) {
-      video.currentTime = 0;
-      video.play();
+    window.chiudiVideo = function () {
+      popup.style.display = "none";
+      try {
+        video.pause();
+        video.currentTime = 0;
+      } catch (e) {}
+    };
+
+    function registraVisualizzazione() {
+      localStorage.setItem(STORAGE_KEY, String(Date.now()));
     }
-  }
 
-  const video = document.getElementById("videoAdv");
-  const btn = document.getElementById("closeVideoBtn");
+    function sonoPassatiDueMinuti() {
+      const last = Number(localStorage.getItem(STORAGE_KEY) || 0);
+      return !last || Date.now() - last >= INTERVALLO_PUBBLICITA;
+    }
 
-  if (video) {
+    function apriVideo() {
+      popup.style.display = "flex";
+      btn.style.display = "none";
+      registraVisualizzazione();
+
+      try {
+        video.currentTime = 0;
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(function () {});
+        }
+      } catch (e) {}
+    }
+
     video.addEventListener("ended", function () {
       setTimeout(function () {
         btn.style.display = "block";
       }, 1000);
     });
-  }
 
-  setInterval(function () {
-    apriVideo();
-  }, 120000);
+    // Parte solo se sono passati almeno 2 minuti dall'ultima pubblicità,
+    // anche se l'utente cambia pagina.
+    if (sonoPassatiDueMinuti()) {
+      setTimeout(apriVideo, 500);
+    }
+
+    // Controllo continuo ogni 5 secondi: appena passano 2 minuti, riparte.
+    setInterval(function () {
+      if (popup.style.display !== "flex" && sonoPassatiDueMinuti()) {
+        apriVideo();
+      }
+    }, 5000);
+  })();
 </script>
 
 <% } %>
