@@ -98,6 +98,31 @@ async function runSchema() {
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  await pool.query(`ALTER TABLE pdt_jump_scores ADD COLUMN IF NOT EXISTS device_id TEXT`);
+
+  await pool.query(`
+    DELETE FROM pdt_jump_scores a
+    USING pdt_jump_scores b
+    WHERE LOWER(TRIM(a.nickname)) = LOWER(TRIM(b.nickname))
+      AND LOWER(TRIM(a.rione)) = LOWER(TRIM(b.rione))
+      AND (
+        a.score < b.score
+        OR (a.score = b.score AND a.coins < b.coins)
+        OR (a.score = b.score AND a.coins = b.coins AND a.id > b.id)
+      )
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS uniq_pdt_jump_device
+    ON pdt_jump_scores (device_id)
+    WHERE device_id IS NOT NULL
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS uniq_pdt_jump_nickname_rione
+    ON pdt_jump_scores (LOWER(TRIM(nickname)), LOWER(TRIM(rione)))
+  `);
+
   // Reset classifica PDT JUMP una sola volta per questa correzione.
   const resetKey = 'pdt_jump_reset_20260428_1';
   const resetCheck = await pool.query('SELECT value FROM site_settings WHERE key = $1', [resetKey]);
@@ -946,6 +971,7 @@ app.post('/api/pdt-jump/score', async (req, res, next) => {
   try {
     const nickname = String(req.body.nickname || '').trim().substring(0, 24);
     const rione = String(req.body.rione || '').trim().substring(0, 60);
+    const deviceId = String(req.body.device_id || '').trim().substring(0, 80);
     const score = Math.max(0, Math.min(Number.parseInt(req.body.score, 10) || 0, 999999));
     const coins = Math.max(0, Math.min(Number.parseInt(req.body.coins, 10) || 0, 9999));
     const levelReached = Math.max(1, Math.min(Number.parseInt(req.body.level_reached, 10) || 1, 8));
@@ -954,11 +980,48 @@ app.post('/api/pdt-jump/score', async (req, res, next) => {
       return res.status(400).json({ ok: false, error: 'Nickname e rione obbligatori.' });
     }
 
-    await pool.query(
-      `INSERT INTO pdt_jump_scores (nickname, rione, score, coins, level_reached)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [nickname, rione, score, coins, levelReached]
-    );
+    if (deviceId) {
+      await pool.query(
+        `INSERT INTO pdt_jump_scores (nickname, rione, device_id, score, coins, level_reached)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (device_id)
+         WHERE device_id IS NOT NULL
+         DO UPDATE SET
+           nickname = EXCLUDED.nickname,
+           rione = EXCLUDED.rione,
+           score = GREATEST(pdt_jump_scores.score, EXCLUDED.score),
+           coins = CASE
+             WHEN EXCLUDED.score > pdt_jump_scores.score THEN EXCLUDED.coins
+             WHEN EXCLUDED.score = pdt_jump_scores.score THEN GREATEST(pdt_jump_scores.coins, EXCLUDED.coins)
+             ELSE pdt_jump_scores.coins
+           END,
+           level_reached = GREATEST(pdt_jump_scores.level_reached, EXCLUDED.level_reached),
+           created_at = CASE
+             WHEN EXCLUDED.score > pdt_jump_scores.score THEN NOW()
+             ELSE pdt_jump_scores.created_at
+           END`,
+        [nickname, rione, deviceId, score, coins, levelReached]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO pdt_jump_scores (nickname, rione, score, coins, level_reached)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (LOWER(TRIM(nickname)), LOWER(TRIM(rione)))
+         DO UPDATE SET
+           score = GREATEST(pdt_jump_scores.score, EXCLUDED.score),
+           coins = CASE
+             WHEN EXCLUDED.score > pdt_jump_scores.score THEN EXCLUDED.coins
+             WHEN EXCLUDED.score = pdt_jump_scores.score THEN GREATEST(pdt_jump_scores.coins, EXCLUDED.coins)
+             ELSE pdt_jump_scores.coins
+           END,
+           level_reached = GREATEST(pdt_jump_scores.level_reached, EXCLUDED.level_reached),
+           created_at = CASE
+             WHEN EXCLUDED.score > pdt_jump_scores.score THEN NOW()
+             ELSE pdt_jump_scores.created_at
+           END`,
+        [nickname, rione, score, coins, levelReached]
+      );
+    }
 
     const { rows } = await pool.query(`
       SELECT nickname, rione, score, coins, level_reached

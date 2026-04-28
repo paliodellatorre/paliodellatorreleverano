@@ -1,6 +1,14 @@
 (() => {
   const PLAYER_KEY = "pdt_jump_player_v1";
 
+  const DEVICE_KEY = "pdt_jump_device_id_v1";
+  let deviceId = localStorage.getItem(DEVICE_KEY);
+  if (!deviceId) {
+    deviceId = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 12);
+    localStorage.setItem(DEVICE_KEY, deviceId);
+  }
+
+
   const startPanel = document.getElementById("pdtStartPanel");
   const endPanel = document.getElementById("pdtEndPanel");
   const startBtn = document.getElementById("pdtStartBtn");
@@ -533,7 +541,7 @@
       const res = await fetch("/api/pdt-jump/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nickname, rione, score: Math.floor(score), coins, level_reached: 1 })
+        body: JSON.stringify({ nickname, rione, device_id: deviceId, score: Math.floor(score), coins, level_reached: 1 })
       });
       const data = await res.json();
       if (data.ok) renderLeaderboard(data.leaderboard);
