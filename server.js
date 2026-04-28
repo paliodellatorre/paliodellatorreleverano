@@ -1,12 +1,14 @@
 
 /*
-SERVER.JS SICURO PER RENDER
-- Non va in crash
-- Avvia sempre il server
-- Reset classifica una volta all'avvio
+SERVER.JS CORRETTO
+- Mantiene le rotte
+- Aggiunge /gioco
+- Resetta classifica all'avvio
+- Compatibile con Render
 */
 
 const express = require("express");
+const path = require("path");
 const { Pool } = require("pg");
 
 const app = express();
@@ -21,10 +23,17 @@ const pool = new Pool({
   }
 });
 
-async function startServer() {
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+async function init() {
   try {
 
-    // crea tabella se non esiste
+    // CREA TABELLA SE NON ESISTE
     await pool.query(`
       CREATE TABLE IF NOT EXISTS pdt_jump_scores (
         id SERIAL PRIMARY KEY,
@@ -40,8 +49,14 @@ async function startServer() {
 
     console.log("Classifica resettata");
 
+    // HOME
     app.get("/", (req, res) => {
-      res.send("Server attivo");
+      res.render("index");
+    });
+
+    // GIOCO
+    app.get("/gioco", (req, res) => {
+      res.render("gioco");
     });
 
     app.listen(PORT, () => {
@@ -54,4 +69,4 @@ async function startServer() {
   }
 }
 
-startServer();
+init();
