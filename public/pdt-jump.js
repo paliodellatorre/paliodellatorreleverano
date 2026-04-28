@@ -32,14 +32,17 @@
   let lastTime = 0;
   let platforms = [];
   let coinItems = [];
+  let rockets = [];
   let targetX = null;
   let highest = 0;
+  let boostTime = 0;
+  let lastRocketScore = 0;
 
   const frog = {
     x: 210,
     y: 560,
-    w: 44,
-    h: 44,
+    w: 48,
+    h: 46,
     vx: 0,
     vy: 0
   };
@@ -52,8 +55,9 @@
         rione = saved.rione;
         playerForm.style.display = "none";
         lockedBox.style.display = "block";
-        lockedBox.innerHTML = `Giocatore: <strong>${escapeHtml(nickname)}</strong><br>Rione: <strong>${escapeHtml(rione)}</strong>`;
-        introText.textContent = "Giocatore già registrato su questo dispositivo.";
+        lockedBox.innerHTML = `Giocatore registrato<br><strong>${escapeHtml(nickname)}</strong> · <strong>${escapeHtml(rione)}</strong>`;
+        introText.textContent = "Nickname e rione sono già salvati su questo dispositivo.";
+        startBtn.textContent = "GIOCA";
       }
     } catch (e) {}
   }
@@ -79,18 +83,38 @@
 
   function addPlatform(worldY, center = false) {
     const width = W();
-    const platformW = rand(92, 142);
+    const platformW = center ? 132 : rand(72, 112); // pietre un po' più corte
     const x = center ? width / 2 - platformW / 2 : rand(12, Math.max(14, width - platformW - 12));
-    const p = { x, y: worldY, w: platformW, h: 18, type: Math.random() > 0.86 ? "gold" : "stone" };
+    const p = {
+      x,
+      y: worldY,
+      w: platformW,
+      h: 18,
+      type: Math.random() > 0.86 ? "gold" : "stone",
+      broken: false,
+      touched: false,
+      crumbleAt: 0
+    };
     platforms.push(p);
 
-    if (!center && Math.random() > 0.38) {
-      coinItems.push({
-        x: x + platformW / 2,
-        y: worldY - 34,
-        r: 10,
-        taken: false
-      });
+    if (!center) {
+      const shouldRocket = score > 0 && score - lastRocketScore >= 1450 && Math.random() > 0.15;
+      if (shouldRocket) {
+        rockets.push({
+          x: x + platformW / 2,
+          y: worldY - 38,
+          r: 13,
+          taken: false
+        });
+        lastRocketScore = score;
+      } else if (Math.random() > 0.40) {
+        coinItems.push({
+          x: x + platformW / 2,
+          y: worldY - 34,
+          r: 10,
+          taken: false
+        });
+      }
     }
   }
 
@@ -107,23 +131,26 @@
     lastTime = 0;
     gameOver = false;
     running = true;
-    targetX = width / 2;
+    targetX = width / 2 - frog.w / 2;
+    boostTime = 0;
+    lastRocketScore = 0;
 
     frog.x = width / 2 - frog.w / 2;
-    frog.y = height - 110;
+    frog.y = height - 112;
     frog.vx = 0;
     frog.vy = 0;
 
     platforms = [];
     coinItems = [];
+    rockets = [];
 
     const baseY = height - 55;
     addPlatform(baseY, true);
 
     let y = baseY - 82;
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 42; i++) {
       addPlatform(y);
-      y -= rand(78, 102);
+      y -= rand(80, 106);
     }
 
     scoreEl.textContent = "0";
@@ -134,10 +161,12 @@
     const rect = canvas.getBoundingClientRect();
     const half = rect.left + rect.width / 2;
 
+    // meno sensibile: ogni tap sposta meno, e verso una corsia più morbida
+    const step = Math.max(48, Math.min(78, rect.width * 0.16));
     if (clientX < half) {
-      targetX = Math.max(8, frog.x - 105);
+      targetX = Math.max(8, frog.x - step);
     } else {
-      targetX = Math.min(W() - frog.w - 8, frog.x + 105);
+      targetX = Math.min(W() - frog.w - 8, frog.x + step);
     }
   }
 
@@ -148,16 +177,18 @@
 
   canvas.addEventListener("pointerdown", pointerHandler, { passive: false });
   canvas.addEventListener("pointermove", (e) => {
-    if (e.buttons) pointerHandler(e);
+    // Non aggiorna continuamente se non stai trascinando davvero: meno sensibilità.
+    if (e.buttons && Math.abs(e.movementX || 0) > 5) pointerHandler(e);
   }, { passive: false });
 
   window.addEventListener("keydown", (e) => {
     if (!running) return;
+    const step = 70;
     if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
-      targetX = Math.max(8, frog.x - 105);
+      targetX = Math.max(8, frog.x - step);
     }
     if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
-      targetX = Math.min(W() - frog.w - 8, frog.x + 105);
+      targetX = Math.min(W() - frog.w - 8, frog.x + step);
     }
   });
 
@@ -171,28 +202,45 @@
 
     const desiredX = targetX ?? frog.x;
     const dx = desiredX - frog.x;
-    frog.vx += dx * 0.045;
-    frog.vx *= 0.78;
-    frog.vx = Math.max(-8, Math.min(8, frog.vx));
+    frog.vx += dx * 0.026; // meno sensibile
+    frog.vx *= 0.82;
+    frog.vx = Math.max(-5.4, Math.min(5.4, frog.vx));
     frog.x += frog.vx;
 
-    frog.vy += 0.52;
+    if (boostTime > 0) {
+      boostTime -= dt;
+      frog.vy = -7.2; // boost controllato, non razzo ingestibile
+      score += 2;
+    } else {
+      frog.vy += 0.50;
+    }
+
     frog.y += frog.vy;
 
     if (frog.x < -frog.w) frog.x = width;
     if (frog.x > width) frog.x = -frog.w;
 
-    // La rana salta automaticamente SOLO quando atterra su una pietra.
     for (const p of platforms) {
+      if (p.broken) continue;
+
       const falling = frog.vy > 0;
       const feetBefore = frog.y + frog.h - frog.vy;
       const feetNow = frog.y + frog.h;
       const overlapX = frog.x + frog.w > p.x && frog.x < p.x + p.w;
 
-      if (falling && overlapX && feetBefore <= p.y + 6 && feetNow >= p.y && feetNow <= p.y + p.h + 16) {
+      if (falling && overlapX && feetBefore <= p.y + 6 && feetNow >= p.y && feetNow <= p.y + p.h + 14) {
         frog.y = p.y - frog.h;
-        frog.vy = -12.6; // salto controllato, non razzo
-        if (p.type === "gold") score += 10;
+        frog.vy = -12.2; // salto automatico controllato
+
+        if (p.type === "gold" && !p.touched) {
+          score += 18;
+          p.touched = true;
+          p.crumbleAt = performance.now() + 260; // si sgretola poco dopo il primo contatto
+        }
+      }
+
+      if (p.type === "gold" && p.touched && !p.broken && performance.now() > p.crumbleAt) {
+        p.broken = true;
       }
     }
 
@@ -202,23 +250,20 @@
     }
 
     highest = Math.max(highest, Math.floor(Math.max(0, -cameraY) / 2));
-    score = highest + coins * 40;
+    score = Math.max(score, highest + coins * 40);
 
     let top = Math.min(...platforms.map(p => p.y));
-    while (top - cameraY > -180) {
-      addPlatform(top - rand(78, 106));
+    while (top - cameraY > -190) {
+      addPlatform(top - rand(82, 110));
       top = Math.min(...platforms.map(p => p.y));
     }
 
-    platforms = platforms.filter(p => p.y - cameraY < height + 180);
+    platforms = platforms.filter(p => p.y - cameraY < height + 180 && !(p.broken && p.y - cameraY > height + 40));
     coinItems = coinItems.filter(c => !c.taken && c.y - cameraY < height + 180);
+    rockets = rockets.filter(r => !r.taken && r.y - cameraY < height + 180);
 
     for (const c of coinItems) {
-      const cx = c.x;
-      const cy = c.y;
-      const fx = frog.x + frog.w / 2;
-      const fy = frog.y + frog.h / 2;
-      const d = Math.hypot(fx - cx, fy - cy);
+      const d = Math.hypot((frog.x + frog.w / 2) - c.x, (frog.y + frog.h / 2) - c.y);
       if (d < 32) {
         c.taken = true;
         coins += 1;
@@ -226,11 +271,22 @@
       }
     }
 
-    if (frog.y - cameraY > height + 90) {
+    for (const r of rockets) {
+      const d = Math.hypot((frog.x + frog.w / 2) - r.x, (frog.y + frog.h / 2) - r.y);
+      if (d < 34) {
+        r.taken = true;
+        boostTime = 4.6;
+        frog.vy = -9;
+        score += 120;
+      }
+    }
+
+    // Se cade davvero oltre il fondo schermo, muore. Nessun salvataggio da pietre fuori vista.
+    if (frog.y - cameraY > height + frog.h + 24) {
       endGame();
     }
 
-    scoreEl.textContent = String(score);
+    scoreEl.textContent = String(Math.floor(score));
     coinsEl.textContent = String(coins);
   }
 
@@ -238,6 +294,96 @@
     ctx.beginPath();
     ctx.roundRect(x, y, w, h, r);
     ctx.fill();
+  }
+
+  function drawFrog(fx, fy) {
+    ctx.save();
+    ctx.translate(fx + frog.w / 2, fy + frog.h / 2);
+
+    // zampe posteriori
+    ctx.fillStyle = "#0f7a38";
+    ctx.beginPath();
+    ctx.ellipse(-22, 15, 13, 7, -0.55, 0, Math.PI * 2);
+    ctx.ellipse(22, 15, 13, 7, 0.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    // corpo
+    ctx.fillStyle = "#16a34a";
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 23, 19, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // pancia
+    ctx.fillStyle = "#86efac";
+    ctx.beginPath();
+    ctx.ellipse(0, 12, 14, 11, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // testa
+    ctx.fillStyle = "#22c55e";
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 23, 19, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // occhi grandi sporgenti
+    ctx.fillStyle = "#22c55e";
+    ctx.beginPath();
+    ctx.arc(-12, -23, 8, 0, Math.PI * 2);
+    ctx.arc(12, -23, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(-12, -23, 5.5, 0, Math.PI * 2);
+    ctx.arc(12, -23, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#003129";
+    ctx.beginPath();
+    ctx.arc(-12, -23, 2.6, 0, Math.PI * 2);
+    ctx.arc(12, -23, 2.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // guance
+    ctx.fillStyle = "rgba(252,189,22,.75)";
+    ctx.beginPath();
+    ctx.arc(-15, -7, 4, 0, Math.PI * 2);
+    ctx.arc(15, -7, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // sorriso
+    ctx.strokeStyle = "#003129";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, -8, 10, 0.20, Math.PI - 0.20);
+    ctx.stroke();
+
+    // braccia
+    ctx.strokeStyle = "#0f7a38";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-18, 2);
+    ctx.lineTo(-28, 7);
+    ctx.moveTo(18, 2);
+    ctx.lineTo(28, 7);
+    ctx.stroke();
+
+    if (boostTime > 0) {
+      ctx.fillStyle = "#FCBD16";
+      ctx.beginPath();
+      ctx.moveTo(-9, 28);
+      ctx.lineTo(0, 50);
+      ctx.lineTo(9, 28);
+      ctx.fill();
+      ctx.fillStyle = "#fb923c";
+      ctx.beginPath();
+      ctx.moveTo(-5, 30);
+      ctx.lineTo(0, 43);
+      ctx.lineTo(5, 30);
+      ctx.fill();
+    }
+
+    ctx.restore();
   }
 
   function draw() {
@@ -265,6 +411,20 @@
     ctx.globalAlpha = 1;
 
     for (const p of platforms) {
+      if (p.broken) {
+        // frammenti pietra dorata sgretolata
+        const y = p.y - cameraY;
+        if (y > -50 && y < height + 60) {
+          ctx.fillStyle = "rgba(252,189,22,.55)";
+          for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            ctx.arc(p.x + 12 + i * (p.w / 5), y + 8 + (i % 2) * 7, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        continue;
+      }
+
       const y = p.y - cameraY;
       if (y < -50 || y > height + 60) continue;
 
@@ -276,6 +436,11 @@
 
       ctx.fillStyle = "rgba(0,49,41,.20)";
       roundedRect(p.x + 5, y + p.h - 4, p.w - 10, 5, 6);
+
+      if (p.type === "gold") {
+        ctx.fillStyle = "rgba(255,255,255,.35)";
+        roundedRect(p.x + 8, y + 4, p.w - 16, 3, 4);
+      }
     }
 
     for (const c of coinItems) {
@@ -298,52 +463,52 @@
       ctx.fill();
     }
 
-    const fx = frog.x;
-    const fy = frog.y - cameraY;
+    for (const r of rockets) {
+      if (r.taken) continue;
+      const y = r.y - cameraY;
+      if (y < -50 || y > height + 50) continue;
 
-    ctx.save();
-    ctx.translate(fx + frog.w / 2, fy + frog.h / 2);
+      ctx.save();
+      ctx.translate(r.x, y);
+      ctx.fillStyle = "#ef4444";
+      ctx.beginPath();
+      ctx.roundRect(-8, -18, 16, 30, 8);
+      ctx.fill();
 
-    ctx.fillStyle = "#16a34a";
-    ctx.beginPath();
-    ctx.ellipse(0, 5, 23, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.fillStyle = "#e5e7eb";
+      ctx.beginPath();
+      ctx.moveTo(-8, -12);
+      ctx.lineTo(0, -26);
+      ctx.lineTo(8, -12);
+      ctx.closePath();
+      ctx.fill();
 
-    ctx.fillStyle = "#22c55e";
-    ctx.beginPath();
-    ctx.ellipse(0, -8, 21, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.fillStyle = "#60a5fa";
+      ctx.beginPath();
+      ctx.arc(0, -3, 4, 0, Math.PI * 2);
+      ctx.fill();
 
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(-8, -17, 6, 0, Math.PI * 2);
-    ctx.arc(8, -17, 6, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.fillStyle = "#FCBD16";
+      ctx.beginPath();
+      ctx.moveTo(-5, 13);
+      ctx.lineTo(0, 25);
+      ctx.lineTo(5, 13);
+      ctx.fill();
+      ctx.restore();
+    }
 
-    ctx.fillStyle = "#003129";
-    ctx.beginPath();
-    ctx.arc(-8, -17, 2.6, 0, Math.PI * 2);
-    ctx.arc(8, -17, 2.6, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = "#003129";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, -7, 8, 0.12, Math.PI - 0.12);
-    ctx.stroke();
-
-    ctx.fillStyle = "#15803d";
-    ctx.beginPath();
-    ctx.ellipse(-21, 13, 10, 6, -0.5, 0, Math.PI * 2);
-    ctx.ellipse(21, 13, 10, 6, 0.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
+    drawFrog(frog.x, frog.y - cameraY);
 
     ctx.fillStyle = "rgba(255,255,255,.88)";
     ctx.font = "900 15px system-ui, -apple-system, Segoe UI, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("SINISTRA  ←     →  DESTRA", width / 2, height - 24);
+
+    if (boostTime > 0) {
+      ctx.fillStyle = "#FCBD16";
+      ctx.font = "1000 18px system-ui, -apple-system, Segoe UI, sans-serif";
+      ctx.fillText("🚀 RAZZO!", width / 2, 96);
+    }
   }
 
   function loop(ts) {
@@ -364,7 +529,7 @@
     overlay.style.display = "none";
     document.body.style.overflow = "";
 
-    finalText.textContent = `${nickname}, hai fatto ${score} punti e raccolto ${coins} coin per il rione ${rione}.`;
+    finalText.textContent = `${nickname}, hai fatto ${Math.floor(score)} punti e raccolto ${coins} coin per il rione ${rione}.`;
     startPanel.style.display = "none";
     endPanel.style.display = "block";
 
@@ -372,7 +537,7 @@
       const res = await fetch("/api/pdt-jump/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nickname, rione, score, coins, level_reached: 1 })
+        body: JSON.stringify({ nickname, rione, score: Math.floor(score), coins, level_reached: 1 })
       });
       const data = await res.json();
       if (data.ok) renderLeaderboard(data.leaderboard);
@@ -444,7 +609,7 @@
   }
 
   async function shareScore() {
-    const text = `Ho fatto ${score} punti su PDT JUMP 🐸🏆\nRione: ${rione}\nRiesci a superarmi?\nGioca anche tu sul sito del Palio della Torre!`;
+    const text = `Ho fatto ${Math.floor(score)} punti su PDT JUMP 🐸🏆\nRione: ${rione}\nRiesci a superarmi?\nGioca anche tu sul sito del Palio della Torre!`;
     const shareData = {
       title: "PDT JUMP",
       text,
