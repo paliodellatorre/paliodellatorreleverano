@@ -31,6 +31,26 @@
   }, { passive: false });
 
 
+
+  function blockGameTouchActions(e) {
+    if (overlay && overlay.style.display === "block") {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }
+
+  ["touchstart", "touchend", "touchcancel", "gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
+    document.addEventListener(eventName, blockGameTouchActions, { passive: false, capture: true });
+  });
+
+  if (overlay) {
+    overlay.addEventListener("contextmenu", blockGameTouchActions, { passive: false, capture: true });
+    overlay.addEventListener("selectstart", blockGameTouchActions, { passive: false, capture: true });
+    overlay.addEventListener("dragstart", blockGameTouchActions, { passive: false, capture: true });
+  }
+
+
   const scoreEl = document.getElementById("pdtScore");
   const coinsEl = document.getElementById("pdtCoins");
   const leaderboardEl = document.getElementById("pdtLeaderboard");
@@ -186,6 +206,7 @@
 
   function pointerHandler(e) {
     e.preventDefault();
+    e.stopPropagation();
     setTargetFromClientX(e.clientX);
   }
 
@@ -241,8 +262,10 @@
       const feetBefore = frog.y + frog.h - frog.vy;
       const feetNow = frog.y + frog.h;
       const overlapX = frog.x + frog.w > p.x && frog.x < p.x + p.w;
+      const platformScreenY = p.y - cameraY;
+      const platformVisible = platformScreenY >= -30 && platformScreenY <= height - 4;
 
-      if (falling && overlapX && feetBefore <= p.y + 6 && feetNow >= p.y && feetNow <= p.y + p.h + 14) {
+      if (falling && platformVisible && overlapX && feetBefore <= p.y + 6 && feetNow >= p.y && feetNow <= p.y + p.h + 14) {
         frog.y = p.y - frog.h;
         frog.vy = -12.2; // salto automatico controllato
 
@@ -299,8 +322,9 @@
       }
     }
 
-    // Se cade davvero oltre il fondo schermo, muore. Nessun salvataggio da pietre fuori vista.
-    if (frog.y - cameraY > height + frog.h + 24) {
+    // Se la rana esce dal fondo dello schermo, la partita finisce subito.
+    // Non può più essere salvata da pietre non visibili sotto lo schermo.
+    if (frog.y - cameraY > height - 2) {
       endGame();
     }
 

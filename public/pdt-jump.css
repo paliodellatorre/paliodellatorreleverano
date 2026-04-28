@@ -330,3 +330,15 @@
   object-fit: contain;
   display: block;
 }
+
+
+/* PDT JUMP: blocca menu copia/incolla, selezione e pressioni lunghe durante il gioco */
+.pdt-game-overlay,
+.pdt-game-overlay *,
+#pdtCanvas {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  touch-action: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
