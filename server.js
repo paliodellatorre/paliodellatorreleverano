@@ -98,6 +98,19 @@ async function runSchema() {
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  // Reset classifica PDT JUMP una sola volta per questa correzione.
+  const resetKey = 'pdt_jump_reset_20260428_1';
+  const resetCheck = await pool.query('SELECT value FROM site_settings WHERE key = $1', [resetKey]);
+  if (resetCheck.rows.length === 0) {
+    await pool.query('DELETE FROM pdt_jump_scores');
+    await pool.query(
+      `INSERT INTO site_settings (key, value, updated_at)
+       VALUES ($1, 'done', NOW())
+       ON CONFLICT (key) DO NOTHING`,
+      [resetKey]
+    );
+  }
+
 }
 
 app.set('view engine', 'ejs');

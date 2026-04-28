@@ -320,22 +320,6 @@
     const cx = fx + frog.w / 2;
     const cy = fy + frog.h / 2;
 
-    // Lingua verso coin vicino
-    let nearestCoin = null;
-    let nearestDist = 9999;
-    for (const c of coinItems) {
-      if (c.taken) continue;
-      const coinY = c.y - cameraY;
-      const d = Math.hypot(cx - c.x, cy - coinY);
-      if (d < nearestDist && d < 92) {
-        nearestDist = d;
-        nearestCoin = { x: c.x, y: coinY };
-      }
-    }
-
-    if (nearestCoin) {
-    // Lingua rimossa come richiesto
-
     // Rana immagine
     if (frogImage.complete && frogImage.naturalWidth > 0) {
       ctx.drawImage(frogImage, cx - fw / 2, cy - fh / 2, fw, fh);
