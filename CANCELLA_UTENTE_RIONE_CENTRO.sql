@@ -1,3 +1,0 @@
-– CANCELLA UTENTE REGISTRATO COME RIONE CENTRO
-
-DELETE FROM pdt_jump_scores WHERE rione = ‘Centro’;
