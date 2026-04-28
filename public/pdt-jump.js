@@ -334,25 +334,7 @@
     }
 
     if (nearestCoin) {
-      // La lingua parte dalla bocca della rana.
-      const mouthX = cx;
-      const mouthY = cy + 2;
-
-      ctx.save();
-      ctx.strokeStyle = "#ef5da8";
-      ctx.lineWidth = 4;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(mouthX, mouthY);
-      ctx.quadraticCurveTo((mouthX + nearestCoin.x) / 2, mouthY - 28, nearestCoin.x, nearestCoin.y);
-      ctx.stroke();
-
-      ctx.fillStyle = "#ef5da8";
-      ctx.beginPath();
-      ctx.arc(nearestCoin.x, nearestCoin.y, 4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
+    // Lingua rimossa come richiesto
 
     // Rana immagine
     if (frogImage.complete && frogImage.naturalWidth > 0) {
