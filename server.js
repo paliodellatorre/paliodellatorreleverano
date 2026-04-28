@@ -88,6 +88,16 @@ async function runSchema() {
   await pool.query(`ALTER TABLE kids_registrations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
 
   await pool.query(`DELETE FROM sports WHERE LOWER(name) = 'corsa'`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS pdt_jump_scores (
+    id SERIAL PRIMARY KEY,
+    nickname TEXT NOT NULL,
+    rione TEXT NOT NULL,
+    score INTEGER NOT NULL DEFAULT 0,
+    coins INTEGER NOT NULL DEFAULT 0,
+    level_reached INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`);
+
 }
 
 app.set('view engine', 'ejs');
@@ -881,6 +891,75 @@ app.get('/admin/export/kids', requireAuth, async (req, res, next) => {
     next(err);
   }
 });
+
+
+/* PDT JUMP - GIOCO */
+app.get('/gioco', async (req, res, next) => {
+  try {
+    const media = await getMediaMap();
+    const leaderboard = await pool.query(`
+      SELECT nickname, rione, score, coins, level_reached
+      FROM pdt_jump_scores
+      ORDER BY score DESC, coins DESC, created_at ASC
+      LIMIT 10
+    `);
+
+    res.render('gioco', {
+      title: 'PDT JUMP',
+      media,
+      leaderboard: leaderboard.rows
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/api/pdt-jump/leaderboard', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT nickname, rione, score, coins, level_reached
+      FROM pdt_jump_scores
+      ORDER BY score DESC, coins DESC, created_at ASC
+      LIMIT 10
+    `);
+
+    res.json({ ok: true, leaderboard: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/pdt-jump/score', async (req, res, next) => {
+  try {
+    const nickname = String(req.body.nickname || '').trim().substring(0, 24);
+    const rione = String(req.body.rione || '').trim().substring(0, 60);
+    const score = Math.max(0, Math.min(Number.parseInt(req.body.score, 10) || 0, 999999));
+    const coins = Math.max(0, Math.min(Number.parseInt(req.body.coins, 10) || 0, 9999));
+    const levelReached = Math.max(1, Math.min(Number.parseInt(req.body.level_reached, 10) || 1, 8));
+
+    if (!nickname || !rione) {
+      return res.status(400).json({ ok: false, error: 'Nickname e rione obbligatori.' });
+    }
+
+    await pool.query(
+      `INSERT INTO pdt_jump_scores (nickname, rione, score, coins, level_reached)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [nickname, rione, score, coins, levelReached]
+    );
+
+    const { rows } = await pool.query(`
+      SELECT nickname, rione, score, coins, level_reached
+      FROM pdt_jump_scores
+      ORDER BY score DESC, coins DESC, created_at ASC
+      LIMIT 10
+    `);
+
+    res.json({ ok: true, leaderboard: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 app.use((err, req, res, next) => {
   console.error(err);
