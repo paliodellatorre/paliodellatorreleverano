@@ -98,6 +98,20 @@ async function runSchema() {
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  // RESET TOTALE PDT JUMP: cancella tutta la classifica una sola volta.
+  // Nuova chiave: forza il reset anche se un reset precedente era già stato eseguito.
+  const resetTotaleKey = 'pdt_jump_reset_totale_20260428_2';
+  const resetTotaleCheck = await pool.query('SELECT value FROM site_settings WHERE key = $1', [resetTotaleKey]);
+  if (resetTotaleCheck.rows.length === 0) {
+    await pool.query('DELETE FROM pdt_jump_scores');
+    await pool.query(
+      `INSERT INTO site_settings (key, value, updated_at)
+       VALUES ($1, 'done', NOW())
+       ON CONFLICT (key) DO NOTHING`,
+      [resetTotaleKey]
+    );
+  }
+
   // Reset classifica PDT JUMP una sola volta per questa correzione.
   const resetKey = 'pdt_jump_reset_20260428_1';
   const resetCheck = await pool.query('SELECT value FROM site_settings WHERE key = $1', [resetKey]);

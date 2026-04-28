@@ -1,6 +1,16 @@
 (() => {
   const PLAYER_KEY = "pdt_jump_player_v1";
 
+  const PLAYER_RESET_KEY = "pdt_jump_player_reset_20260428_2";
+
+  // RESET REGISTRAZIONE GIOCATORE SU QUESTO DISPOSITIVO:
+  // cancella nickname/rione salvati una sola volta, poi permette una nuova registrazione pulita.
+  if (localStorage.getItem(PLAYER_RESET_KEY) !== "yes") {
+    localStorage.removeItem(PLAYER_KEY);
+    localStorage.setItem(PLAYER_RESET_KEY, "yes");
+  }
+
+
   const startPanel = document.getElementById("pdtStartPanel");
   const endPanel = document.getElementById("pdtEndPanel");
   const startBtn = document.getElementById("pdtStartBtn");
