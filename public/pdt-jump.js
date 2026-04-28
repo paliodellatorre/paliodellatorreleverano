@@ -1,364 +1,393 @@
 (() => {
-  const RIONI = [
-    "Centro",
-    "Chianca",
-    "Consolazione",
-    "Iana",
-    "Patula Cupa - Quartararu",
-    "Pozzolungo Nord",
-    "Pozzolungo Sud",
-    "Zita Rosa"
-  ];
+  const PLAYER_KEY = "pdt_jump_player_v1";
 
   const startPanel = document.getElementById("pdtStartPanel");
-  const gamePanel = document.getElementById("pdtGamePanel");
   const endPanel = document.getElementById("pdtEndPanel");
   const startBtn = document.getElementById("pdtStartBtn");
   const restartBtn = document.getElementById("pdtRestartBtn");
   const shareBtn = document.getElementById("pdtShareBtn");
-  const jumpBtn = document.getElementById("pdtJumpBtn");
   const errorBox = document.getElementById("pdtStartError");
   const nicknameInput = document.getElementById("pdtNickname");
   const rioneSelect = document.getElementById("pdtRione");
+  const playerForm = document.getElementById("pdtPlayerForm");
+  const lockedBox = document.getElementById("pdtLockedPlayer");
+  const introText = document.getElementById("pdtIntroText");
+
+  const overlay = document.getElementById("pdtGameOverlay");
   const canvas = document.getElementById("pdtCanvas");
   const ctx = canvas.getContext("2d");
+
   const scoreEl = document.getElementById("pdtScore");
   const coinsEl = document.getElementById("pdtCoins");
-  const levelEl = document.getElementById("pdtLevel");
   const leaderboardEl = document.getElementById("pdtLeaderboard");
   const finalText = document.getElementById("pdtFinalText");
 
   let nickname = "";
   let rione = "";
   let running = false;
-  let saved = false;
-  let animationId = null;
-  let lastTime = 0;
+  let gameOver = false;
   let score = 0;
   let coins = 0;
-  let levelIndex = 0;
   let cameraY = 0;
+  let lastTime = 0;
+  let platforms = [];
+  let coinItems = [];
+  let targetX = null;
+  let highest = 0;
 
   const frog = {
     x: 210,
-    y: 520,
-    r: 22,
+    y: 560,
+    w: 44,
+    h: 44,
     vx: 0,
-    vy: 0,
-    onPlatform: false
+    vy: 0
   };
 
-  let platforms = [];
-  let coinItems = [];
+  function loadLockedPlayer() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PLAYER_KEY) || "null");
+      if (saved && saved.nickname && saved.rione) {
+        nickname = saved.nickname;
+        rione = saved.rione;
+        playerForm.style.display = "none";
+        lockedBox.style.display = "block";
+        lockedBox.innerHTML = `Giocatore: <strong>${escapeHtml(nickname)}</strong><br>Rione: <strong>${escapeHtml(rione)}</strong>`;
+        introText.textContent = "Giocatore già registrato su questo dispositivo.";
+      }
+    } catch (e) {}
+  }
 
-  function resizeCanvasForDisplay() {
-    const rect = canvas.getBoundingClientRect();
+  function saveLockedPlayer() {
+    localStorage.setItem(PLAYER_KEY, JSON.stringify({ nickname, rione }));
+  }
+
+  function setupCanvasSize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const width = Math.max(320, Math.floor(rect.width * dpr));
-    const height = Math.max(440, Math.floor(rect.height * dpr));
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function W() { return canvas.getBoundingClientRect().width; }
+  function H() { return canvas.getBoundingClientRect().height; }
+
+  function rand(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function addPlatform(worldY, center = false) {
+    const width = W();
+    const platformW = rand(92, 142);
+    const x = center ? width / 2 - platformW / 2 : rand(12, Math.max(14, width - platformW - 12));
+    const p = { x, y: worldY, w: platformW, h: 18, type: Math.random() > 0.86 ? "gold" : "stone" };
+    platforms.push(p);
+
+    if (!center && Math.random() > 0.38) {
+      coinItems.push({
+        x: x + platformW / 2,
+        y: worldY - 34,
+        r: 10,
+        taken: false
+      });
     }
   }
 
-  function rand(min, max) {
-    return Math.random() * (max - min) + min;
-  }
-
-  function makePlatform(x, y, w, level) {
-    return {
-      x,
-      y,
-      w,
-      h: 18,
-      level
-    };
-  }
-
   function resetGame() {
-    resizeCanvasForDisplay();
-    const w = canvas.width;
-    const h = canvas.height;
+    setupCanvasSize();
 
-    running = true;
-    saved = false;
-    lastTime = performance.now();
+    const width = W();
+    const height = H();
+
     score = 0;
     coins = 0;
-    levelIndex = 0;
     cameraY = 0;
+    highest = 0;
+    lastTime = 0;
+    gameOver = false;
+    running = true;
+    targetX = width / 2;
 
-    frog.x = w / 2;
-    frog.y = h - 92;
+    frog.x = width / 2 - frog.w / 2;
+    frog.y = height - 110;
     frog.vx = 0;
-    frog.vy = -8;
-    frog.r = Math.max(18, Math.min(26, w * 0.055));
+    frog.vy = 0;
 
     platforms = [];
     coinItems = [];
 
-    platforms.push(makePlatform(w / 2 - 70, h - 55, 140, 0));
+    const baseY = height - 55;
+    addPlatform(baseY, true);
 
-    let y = h - 145;
-    for (let i = 1; i <= 85; i++) {
-      const lvl = Math.min(7, Math.floor(i / 10));
-      const pw = Math.max(72, 122 - lvl * 6);
-      const x = rand(25, w - pw - 25);
-      platforms.push(makePlatform(x, y, pw, lvl));
-
-      if (i % 2 === 0) {
-        coinItems.push({
-          x: x + pw / 2,
-          y: y - 38,
-          r: 10,
-          taken: false
-        });
-      }
-
-      y -= rand(68, 92);
+    let y = baseY - 82;
+    for (let i = 0; i < 40; i++) {
+      addPlatform(y);
+      y -= rand(78, 102);
     }
 
-    updateHud();
+    scoreEl.textContent = "0";
+    coinsEl.textContent = "0";
   }
 
-  function updateHud() {
-    scoreEl.textContent = Math.floor(score);
-    coinsEl.textContent = coins;
-    levelEl.textContent = RIONI[levelIndex] || RIONI[7];
+  function setTargetFromClientX(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const half = rect.left + rect.width / 2;
+
+    if (clientX < half) {
+      targetX = Math.max(8, frog.x - 105);
+    } else {
+      targetX = Math.min(W() - frog.w - 8, frog.x + 105);
+    }
   }
 
-  function jump() {
+  function pointerHandler(e) {
+    e.preventDefault();
+    setTargetFromClientX(e.clientX);
+  }
+
+  canvas.addEventListener("pointerdown", pointerHandler, { passive: false });
+  canvas.addEventListener("pointermove", (e) => {
+    if (e.buttons) pointerHandler(e);
+  }, { passive: false });
+
+  window.addEventListener("keydown", (e) => {
     if (!running) return;
-    frog.vy = -12.5 - levelIndex * 0.18;
-  }
-
-  function drawRoundedRect(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  function drawBackground(w, h) {
-    const sky = ctx.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, "#8bdcff");
-    sky.addColorStop(0.55, "#dff7ff");
-    sky.addColorStop(1, "#d9f99d");
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = "#ffffff";
-    for (let i = 0; i < 6; i++) {
-      const cx = (i * 130 + (cameraY * 0.08)) % (w + 150) - 80;
-      const cy = 60 + i * 48;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, 45, 16, 0, 0, Math.PI * 2);
-      ctx.ellipse(cx + 36, cy + 2, 35, 13, 0, 0, Math.PI * 2);
-      ctx.fill();
+    if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+      targetX = Math.max(8, frog.x - 105);
     }
-    ctx.globalAlpha = 1;
-  }
+    if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+      targetX = Math.min(W() - frog.w - 8, frog.x + 105);
+    }
+  });
 
-  function drawFrog(x, y, r) {
-    ctx.save();
+  window.addEventListener("resize", () => {
+    if (running) setupCanvasSize();
+  });
 
-    // body
-    ctx.fillStyle = "#22c55e";
-    ctx.beginPath();
-    ctx.ellipse(x, y + r * 0.10, r * 0.95, r * 0.82, 0, 0, Math.PI * 2);
-    ctx.fill();
+  function physics(dt) {
+    const width = W();
+    const height = H();
 
-    // belly
-    ctx.fillStyle = "#bbf7d0";
-    ctx.beginPath();
-    ctx.ellipse(x, y + r * 0.28, r * 0.48, r * 0.36, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // eyes
-    ctx.fillStyle = "#22c55e";
-    ctx.beginPath();
-    ctx.arc(x - r * 0.45, y - r * 0.55, r * 0.34, 0, Math.PI * 2);
-    ctx.arc(x + r * 0.45, y - r * 0.55, r * 0.34, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(x - r * 0.45, y - r * 0.57, r * 0.22, 0, Math.PI * 2);
-    ctx.arc(x + r * 0.45, y - r * 0.57, r * 0.22, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#0f172a";
-    ctx.beginPath();
-    ctx.arc(x - r * 0.43, y - r * 0.56, r * 0.10, 0, Math.PI * 2);
-    ctx.arc(x + r * 0.43, y - r * 0.56, r * 0.10, 0, Math.PI * 2);
-    ctx.fill();
-
-    // smile
-    ctx.strokeStyle = "#064e3b";
-    ctx.lineWidth = Math.max(2, r * 0.08);
-    ctx.beginPath();
-    ctx.arc(x, y - r * 0.05, r * 0.35, 0.15 * Math.PI, 0.85 * Math.PI);
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  function drawCoin(x, y, r) {
-    ctx.save();
-    ctx.fillStyle = "#facc15";
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#f59e0b";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.fillStyle = "#fff7ad";
-    ctx.font = `${r * 1.2}px Arial`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("★", x, y + 1);
-    ctx.restore();
-  }
-
-  function update(dt) {
-    const w = canvas.width;
-    const h = canvas.height;
-
-    const gravity = 0.42 + levelIndex * 0.018;
-    frog.vy += gravity;
-    frog.y += frog.vy;
+    const desiredX = targetX ?? frog.x;
+    const dx = desiredX - frog.x;
+    frog.vx += dx * 0.045;
+    frog.vx *= 0.78;
+    frog.vx = Math.max(-8, Math.min(8, frog.vx));
     frog.x += frog.vx;
 
-    if (frog.x < -frog.r) frog.x = w + frog.r;
-    if (frog.x > w + frog.r) frog.x = -frog.r;
+    frog.vy += 0.52;
+    frog.y += frog.vy;
 
-    // simple auto side drift to make it playable on mobile
-    frog.vx = Math.sin(performance.now() / 650) * (2.2 + levelIndex * 0.12);
+    if (frog.x < -frog.w) frog.x = width;
+    if (frog.x > width) frog.x = -frog.w;
 
-    // camera follows frog upward
-    const targetY = h * 0.42;
-    if (frog.y < targetY) {
-      const diff = targetY - frog.y;
-      frog.y = targetY;
-      cameraY += diff;
-      platforms.forEach(p => p.y += diff);
-      coinItems.forEach(c => c.y += diff);
-      score += diff * 0.18;
+    // La rana salta automaticamente SOLO quando atterra su una pietra.
+    for (const p of platforms) {
+      const falling = frog.vy > 0;
+      const feetBefore = frog.y + frog.h - frog.vy;
+      const feetNow = frog.y + frog.h;
+      const overlapX = frog.x + frog.w > p.x && frog.x < p.x + p.w;
+
+      if (falling && overlapX && feetBefore <= p.y + 6 && feetNow >= p.y && feetNow <= p.y + p.h + 16) {
+        frog.y = p.y - frog.h;
+        frog.vy = -12.6; // salto controllato, non razzo
+        if (p.type === "gold") score += 10;
+      }
     }
 
-    // platform collision
-    platforms.forEach(p => {
-      if (
-        frog.vy > 0 &&
-        frog.x + frog.r * 0.65 > p.x &&
-        frog.x - frog.r * 0.65 < p.x + p.w &&
-        frog.y + frog.r > p.y &&
-        frog.y + frog.r < p.y + p.h + frog.vy + 8
-      ) {
-        frog.y = p.y - frog.r;
-        jump();
-        const newLevel = Math.min(7, p.level);
-        if (newLevel > levelIndex) levelIndex = newLevel;
-      }
-    });
+    const screenY = frog.y - cameraY;
+    if (screenY < height * 0.42) {
+      cameraY = frog.y - height * 0.42;
+    }
 
-    // coins
-    coinItems.forEach(c => {
-      if (!c.taken) {
-        const dx = frog.x - c.x;
-        const dy = frog.y - c.y;
-        if (Math.sqrt(dx * dx + dy * dy) < frog.r + c.r + 6) {
-          c.taken = true;
-          coins += 1;
-          score += 80;
-        }
-      }
-    });
+    highest = Math.max(highest, Math.floor(Math.max(0, -cameraY) / 2));
+    score = highest + coins * 40;
 
-    if (frog.y > h + 80) {
+    let top = Math.min(...platforms.map(p => p.y));
+    while (top - cameraY > -180) {
+      addPlatform(top - rand(78, 106));
+      top = Math.min(...platforms.map(p => p.y));
+    }
+
+    platforms = platforms.filter(p => p.y - cameraY < height + 180);
+    coinItems = coinItems.filter(c => !c.taken && c.y - cameraY < height + 180);
+
+    for (const c of coinItems) {
+      const cx = c.x;
+      const cy = c.y;
+      const fx = frog.x + frog.w / 2;
+      const fy = frog.y + frog.h / 2;
+      const d = Math.hypot(fx - cx, fy - cy);
+      if (d < 32) {
+        c.taken = true;
+        coins += 1;
+        score += 40;
+      }
+    }
+
+    if (frog.y - cameraY > height + 90) {
       endGame();
     }
 
-    updateHud();
+    scoreEl.textContent = String(score);
+    coinsEl.textContent = String(coins);
+  }
+
+  function roundedRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+    ctx.fill();
   }
 
   function draw() {
-    const w = canvas.width;
-    const h = canvas.height;
+    const width = W();
+    const height = H();
 
-    drawBackground(w, h);
+    ctx.clearRect(0, 0, width, height);
 
-    platforms.forEach(p => {
-      if (p.y < -40 || p.y > h + 40) return;
-      ctx.fillStyle = "#64748b";
-      drawRoundedRect(p.x, p.y, p.w, p.h, 12);
-      ctx.fillStyle = "#94a3b8";
-      drawRoundedRect(p.x + 6, p.y + 3, p.w - 12, 5, 5);
-      ctx.fillStyle = "rgba(0,49,41,.18)";
-      ctx.fillRect(p.x + 8, p.y + p.h, p.w - 16, 4);
-    });
+    const bg = ctx.createLinearGradient(0, 0, 0, height);
+    bg.addColorStop(0, "#083c2f");
+    bg.addColorStop(0.35, "#0b6b4d");
+    bg.addColorStop(1, "#bde77e");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, width, height);
 
-    coinItems.forEach(c => {
-      if (!c.taken && c.y > -30 && c.y < h + 30) drawCoin(c.x, c.y, c.r);
-    });
-
-    // level banner
-    ctx.fillStyle = "rgba(0,49,41,.78)";
-    ctx.fillRect(0, 0, w, 38);
+    ctx.globalAlpha = 0.18;
     ctx.fillStyle = "#FCBD16";
-    ctx.font = `bold ${Math.max(16, w * 0.04)}px Arial`;
+    for (let i = 0; i < 9; i++) {
+      const x = (i * 97 + 35) % width;
+      const y = (i * 141 + (-cameraY * 0.22)) % height;
+      ctx.beginPath();
+      ctx.arc(x, y, 16 + (i % 3) * 7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    for (const p of platforms) {
+      const y = p.y - cameraY;
+      if (y < -50 || y > height + 60) continue;
+
+      ctx.fillStyle = p.type === "gold" ? "#FCBD16" : "#e5e7eb";
+      roundedRect(p.x, y, p.w, p.h, 10);
+      ctx.strokeStyle = "#003129";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(0,49,41,.20)";
+      roundedRect(p.x + 5, y + p.h - 4, p.w - 10, 5, 6);
+    }
+
+    for (const c of coinItems) {
+      if (c.taken) continue;
+      const y = c.y - cameraY;
+      if (y < -40 || y > height + 40) continue;
+
+      ctx.fillStyle = "#FCBD16";
+      ctx.beginPath();
+      ctx.arc(c.x, y, c.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#7c4a03";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = "#fff8c5";
+      ctx.beginPath();
+      ctx.arc(c.x - 3, y - 4, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const fx = frog.x;
+    const fy = frog.y - cameraY;
+
+    ctx.save();
+    ctx.translate(fx + frog.w / 2, fy + frog.h / 2);
+
+    ctx.fillStyle = "#16a34a";
+    ctx.beginPath();
+    ctx.ellipse(0, 5, 23, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#22c55e";
+    ctx.beginPath();
+    ctx.ellipse(0, -8, 21, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(-8, -17, 6, 0, Math.PI * 2);
+    ctx.arc(8, -17, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#003129";
+    ctx.beginPath();
+    ctx.arc(-8, -17, 2.6, 0, Math.PI * 2);
+    ctx.arc(8, -17, 2.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#003129";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, -7, 8, 0.12, Math.PI - 0.12);
+    ctx.stroke();
+
+    ctx.fillStyle = "#15803d";
+    ctx.beginPath();
+    ctx.ellipse(-21, 13, 10, 6, -0.5, 0, Math.PI * 2);
+    ctx.ellipse(21, 13, 10, 6, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    ctx.fillStyle = "rgba(255,255,255,.88)";
+    ctx.font = "900 15px system-ui, -apple-system, Segoe UI, sans-serif";
     ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(`Livello ${levelIndex + 1}/8 · ${RIONI[levelIndex]}`, w / 2, 19);
-
-    drawFrog(frog.x, frog.y, frog.r);
+    ctx.fillText("SINISTRA  ←     →  DESTRA", width / 2, height - 24);
   }
 
-  function loop(now) {
+  function loop(ts) {
     if (!running) return;
-    const dt = Math.min(32, now - lastTime);
-    lastTime = now;
-    update(dt);
+    const dt = Math.min((ts - lastTime) / 1000 || 0.016, 0.033);
+    lastTime = ts;
+
+    physics(dt);
     draw();
-    animationId = requestAnimationFrame(loop);
+
+    if (!gameOver) requestAnimationFrame(loop);
   }
 
-  async function saveScore() {
-    if (saved) return;
-    saved = true;
+  async function endGame() {
+    if (gameOver) return;
+    gameOver = true;
+    running = false;
+    overlay.style.display = "none";
+    document.body.style.overflow = "";
+
+    finalText.textContent = `${nickname}, hai fatto ${score} punti e raccolto ${coins} coin per il rione ${rione}.`;
+    startPanel.style.display = "none";
+    endPanel.style.display = "block";
 
     try {
       const res = await fetch("/api/pdt-jump/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nickname,
-          rione,
-          score: Math.floor(score),
-          coins,
-          level_reached: levelIndex + 1
-        })
+        body: JSON.stringify({ nickname, rione, score, coins, level_reached: 1 })
       });
-
       const data = await res.json();
-      if (data && data.ok) renderLeaderboard(data.leaderboard || []);
+      if (data.ok) renderLeaderboard(data.leaderboard);
     } catch (e) {}
   }
 
   function renderLeaderboard(rows) {
     if (!leaderboardEl) return;
-    if (!rows.length) {
+
+    if (!rows || !rows.length) {
       leaderboardEl.innerHTML = `<li class="empty">Ancora nessun punteggio. Inizia tu!</li>`;
       return;
     }
 
-    leaderboardEl.innerHTML = rows.map(row => `
+    leaderboardEl.innerHTML = rows.map((row) => `
       <li>
         <span>
           <strong>${escapeHtml(row.nickname)}</strong>
@@ -370,84 +399,79 @@
   }
 
   function escapeHtml(str) {
-    return String(str || "").replace(/[&<>"']/g, s => ({
+    return String(str || "").replace(/[&<>"']/g, (m) => ({
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
       '"': "&quot;",
       "'": "&#039;"
-    }[s]));
+    }[m]));
   }
 
-  async function refreshLeaderboard() {
+  async function loadLeaderboard() {
     try {
       const res = await fetch("/api/pdt-jump/leaderboard");
       const data = await res.json();
-      if (data && data.ok) renderLeaderboard(data.leaderboard || []);
+      if (data.ok) renderLeaderboard(data.leaderboard);
     } catch (e) {}
   }
 
-  function endGame() {
-    running = false;
-    cancelAnimationFrame(animationId);
-    gamePanel.style.display = "none";
-    endPanel.style.display = "block";
-    finalText.innerHTML = `Hai fatto <strong>${Math.floor(score)}</strong> punti e raccolto <strong>${coins}</strong> coin.<br>Livello raggiunto: <strong>${levelIndex + 1}/8 · ${RIONI[levelIndex]}</strong>`;
-    saveScore();
-  }
-
   function startGame() {
-    nickname = nicknameInput.value.trim();
-    rione = rioneSelect.value.trim();
-
     if (!nickname || !rione) {
-      errorBox.textContent = "Inserisci nickname e rione per iniziare.";
-      return;
+      nickname = nicknameInput.value.trim();
+      rione = rioneSelect.value.trim();
+
+      if (!nickname || !rione) {
+        errorBox.textContent = "Inserisci nickname e rione per iniziare.";
+        return;
+      }
+
+      saveLockedPlayer();
+      loadLockedPlayer();
     }
 
     errorBox.textContent = "";
     startPanel.style.display = "none";
     endPanel.style.display = "none";
-    gamePanel.style.display = "block";
 
-    resetGame();
-    animationId = requestAnimationFrame(loop);
+    overlay.style.display = "block";
+    document.body.style.overflow = "hidden";
+
+    setTimeout(() => {
+      resetGame();
+      requestAnimationFrame(loop);
+    }, 80);
   }
 
-  function shareResult() {
-    const text = `Ho fatto ${Math.floor(score)} punti su PDT JUMP 🐸🏆\nRione: ${rione}\nRiesci a superarmi?\nGioca anche tu sul sito del Palio della Torre Leverano!`;
+  async function shareScore() {
+    const text = `Ho fatto ${score} punti su PDT JUMP 🐸🏆\nRione: ${rione}\nRiesci a superarmi?\nGioca anche tu sul sito del Palio della Torre!`;
     const shareData = {
       title: "PDT JUMP",
       text,
-      url: window.location.href
+      url: window.location.origin + "/gioco"
     };
 
     if (navigator.share) {
-      navigator.share(shareData).catch(() => {});
+      try {
+        await navigator.share(shareData);
+      } catch (e) {}
     } else {
-      navigator.clipboard?.writeText(`${text}\n${window.location.href}`);
-      alert("Risultato copiato. Puoi incollarlo su WhatsApp o sui social.");
+      try {
+        await navigator.clipboard.writeText(`${text}\n${shareData.url}`);
+        alert("Risultato copiato. Ora puoi incollarlo su WhatsApp o social.");
+      } catch (e) {
+        alert(text);
+      }
     }
   }
 
-  startBtn.addEventListener("click", startGame);
-  restartBtn.addEventListener("click", () => {
+  startBtn?.addEventListener("click", startGame);
+  restartBtn?.addEventListener("click", () => {
     endPanel.style.display = "none";
     startPanel.style.display = "block";
-    refreshLeaderboard();
   });
-  shareBtn.addEventListener("click", shareResult);
-  jumpBtn.addEventListener("click", jump);
-  canvas.addEventListener("pointerdown", jump);
-  window.addEventListener("keydown", e => {
-    if (e.code === "Space" || e.code === "ArrowUp") {
-      e.preventDefault();
-      jump();
-    }
-  });
-  window.addEventListener("resize", () => {
-    if (running) resizeCanvasForDisplay();
-  });
+  shareBtn?.addEventListener("click", shareScore);
 
-  refreshLeaderboard();
+  loadLockedPlayer();
+  loadLeaderboard();
 })();

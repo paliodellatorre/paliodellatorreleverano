@@ -2,51 +2,42 @@
 
 <link rel="stylesheet" href="/pdt-jump.css">
 
-<section class="section pdt-game-page">
-  <div class="container pdt-game-container">
+<section class="pdt-game-page">
+  <div class="pdt-game-shell">
     <div class="pdt-game-hero">
       <small>Summer Palio</small>
       <h2>PDT JUMP 🐸</h2>
-      <p>Salta sulle pietre, raccogli coin e prova a entrare nella Top 10 del Palio.</p>
+      <p>Gioco infinito: sposta la rana a sinistra e destra, salta sulle pietre e raccogli coin.</p>
     </div>
 
     <div class="pdt-game-layout">
       <div class="pdt-game-card">
         <div id="pdtStartPanel" class="pdt-panel">
           <h3>Prima di giocare</h3>
-          <p>Inserisci nickname e rione. La classifica è pubblica.</p>
+          <p id="pdtIntroText">Inserisci nickname e rione. La classifica è pubblica.</p>
 
-          <label>Nickname</label>
-          <input id="pdtNickname" maxlength="24" placeholder="Es. Andrea" autocomplete="off">
+          <div id="pdtLockedPlayer" class="pdt-locked-player" style="display:none;"></div>
 
-          <label>Rione</label>
-          <select id="pdtRione">
-            <option value="">Scegli il rione</option>
-            <option value="Centro">Centro</option>
-            <option value="Chianca">Chianca</option>
-            <option value="Consolazione">Consolazione</option>
-            <option value="Iana">Iana</option>
-            <option value="Patula Cupa - Quartararu">Patula Cupa - Quartararu</option>
-            <option value="Pozzolungo Nord">Pozzolungo Nord</option>
-            <option value="Pozzolungo Sud">Pozzolungo Sud</option>
-            <option value="Zita Rosa">Zita Rosa</option>
-          </select>
+          <div id="pdtPlayerForm">
+            <label>Nickname</label>
+            <input id="pdtNickname" maxlength="24" placeholder="Es. Andrea" autocomplete="off">
+
+            <label>Rione</label>
+            <select id="pdtRione">
+              <option value="">Scegli il rione</option>
+              <option value="Centro">Centro</option>
+              <option value="Chianca">Chianca</option>
+              <option value="Consolazione">Consolazione</option>
+              <option value="Iana">Iana</option>
+              <option value="Patula Cupa - Quartararu">Patula Cupa - Quartararu</option>
+              <option value="Pozzolungo Nord">Pozzolungo Nord</option>
+              <option value="Pozzolungo Sud">Pozzolungo Sud</option>
+              <option value="Zita Rosa">Zita Rosa</option>
+            </select>
+          </div>
 
           <button id="pdtStartBtn" class="button button-yellow" type="button">INIZIA</button>
           <div id="pdtStartError" class="pdt-error"></div>
-        </div>
-
-        <div id="pdtGamePanel" class="pdt-game-wrap" style="display:none;">
-          <div class="pdt-hud">
-            <div><span>Punti</span><strong id="pdtScore">0</strong></div>
-            <div><span>Coin</span><strong id="pdtCoins">0</strong></div>
-            <div><span>Livello</span><strong id="pdtLevel">Centro</strong></div>
-          </div>
-
-          <canvas id="pdtCanvas" width="420" height="620" aria-label="PDT Jump"></canvas>
-
-          <div class="pdt-mobile-hint">Tocca lo schermo per saltare 🐸</div>
-          <button id="pdtJumpBtn" class="pdt-jump-btn" type="button">SALTA</button>
         </div>
 
         <div id="pdtEndPanel" class="pdt-panel" style="display:none;">
@@ -80,6 +71,20 @@
     </div>
   </div>
 </section>
+
+<div id="pdtGameOverlay" class="pdt-game-overlay" style="display:none;">
+  <div class="pdt-full-hud">
+    <div><span>Punti</span><strong id="pdtScore">0</strong></div>
+    <div><span>Coin</span><strong id="pdtCoins">0</strong></div>
+    <div><span>Gioco</span><strong>INFINITO</strong></div>
+  </div>
+
+  <canvas id="pdtCanvas" width="420" height="720" aria-label="PDT Jump"></canvas>
+
+  <div class="pdt-control-hint">
+    Tocca SINISTRA o DESTRA dello schermo per muovere la rana
+  </div>
+</div>
 
 <script src="/pdt-jump.js"></script>
 
