@@ -315,8 +315,8 @@
   }
 
   function drawFrog(fx, fy) {
-    const fw = 70;
-    const fh = 70;
+    const fw = 62;
+    const fh = 62;
     const cx = fx + frog.w / 2;
     const cy = fy + frog.h / 2;
 
@@ -334,14 +334,23 @@
     }
 
     if (nearestCoin) {
+      // La lingua parte dalla bocca della rana.
+      const mouthX = cx;
+      const mouthY = cy + 2;
+
       ctx.save();
       ctx.strokeStyle = "#ef5da8";
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 4;
       ctx.lineCap = "round";
       ctx.beginPath();
-      ctx.moveTo(cx, cy - 5);
-      ctx.quadraticCurveTo((cx + nearestCoin.x) / 2, cy - 35, nearestCoin.x, nearestCoin.y);
+      ctx.moveTo(mouthX, mouthY);
+      ctx.quadraticCurveTo((mouthX + nearestCoin.x) / 2, mouthY - 28, nearestCoin.x, nearestCoin.y);
       ctx.stroke();
+
+      ctx.fillStyle = "#ef5da8";
+      ctx.beginPath();
+      ctx.arc(nearestCoin.x, nearestCoin.y, 4, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
 
