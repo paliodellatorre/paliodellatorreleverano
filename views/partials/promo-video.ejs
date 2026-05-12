@@ -66,9 +66,9 @@
     };
 
     function mostraVideoSoloUnaVolta() {
-      if (localStorage.getItem(STORAGE_KEY) === "yes") return;
+     if (sessionStorage.getItem(STORAGE_KEY) === "yes") return;
 
-      localStorage.setItem(STORAGE_KEY, "yes");
+sessionStorage.setItem(STORAGE_KEY, "yes");
 
       popup.style.display = "flex";
       btn.style.display = "none";
