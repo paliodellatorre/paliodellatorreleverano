@@ -2,7 +2,18 @@
 <section class="section" style="padding-top:0"><div class="container"><div class="card"><h3 style="margin-top:0;color:var(--green)">Come funziona</h3><p style="line-height:1.9;margin-bottom:0"><strong>1.</strong> Scegli il tuo sport.<br><strong>2.</strong> Inserisci i tuoi dati.<br><strong>3.</strong> Richiedi la maglietta del tuo rione.<br><strong>4.</strong> E il gioco è fatto.</p></div></div></section>
 <section id="iscrizioni" class="section">
   <div class="container two-col"><div class="card"><h2>Iscrizioni sport</h2><p style="margin-top:0">Compila il modulo dal tuo smartphone. Per gli sport di coppia devi inserire anche il compagno dello stesso rione.</p>
-    <% if (errors && errors.length) { %><div class="notice notice-error"><% errors.forEach(function(error) { %><div><%= error %></div><% }) %></div><% } %>
+  <p style="color: red; font-weight: 500; margin-top: 10px;">
+  <strong>ATTENZIONE:</strong><br>
+
+  Chi si iscrive a <strong>Burraco</strong> non potrà partecipare a 
+  <strong>Ping Pong</strong>, <strong>Calcio 1vs1</strong>, 
+  <strong>Volley</strong>, <strong>Scopa</strong> e viceversa.<br><br>
+
+  Chi si iscrive a <strong>Scopa</strong> non potrà partecipare a 
+  <strong>Ping Pong</strong>, <strong>Burraco</strong> e 
+  <strong>Volley</strong> e viceversa.
+</p>
+<% if (errors && errors.length) { %><div class="notice notice-error"><% errors.forEach(function(error) { %><div><%= error %></div><% }) %></div><% } %>
     <form method="POST" action="/iscrizioni" id="palioForm">
       <div class="form-grid">
         <div><label>Sport *</label><select name="sport_id" id="sport_id" required><option value="">Seleziona uno sport</option><% sports.forEach(function(sport){ const lowerName=String(sport.name||'').toLowerCase(); const isPair=lowerName.includes('coppia')||['padel','burraco','scopa','biliardino'].some(k=>lowerName.includes(k)); %><option value="<%= sport.id %>" data-price="<%= Number(sport.price).toFixed(2) %>" data-pair="<%= isPair ? 'true' : 'false' %>" <%= String(formData.sport_id||'')===String(sport.id)?'selected':'' %>><%= sport.name %> — €<%= Number(sport.price).toFixed(2) %><%= isPair ? ' a coppia' : '' %></option><% }) %></select></div>
