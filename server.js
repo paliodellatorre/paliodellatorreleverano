@@ -254,7 +254,50 @@ function formatMaglia(value, size) {
   }
   return 'NO';
 }
+function normalizeSportName(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’']/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
+const SPORT_CONFLICTS = {
+  'burraco': ['ping pong', 'calcio 1vs1', 'volley', 'scopa'],
+  'scopa': ['ping pong', 'burraco', 'volley'],
+  'ping pong': ['burraco', 'scopa'],
+  'calcio 1vs1': ['burraco'],
+  'volley': ['burraco', 'scopa']
+};
+
+function sportsConflict(a, b) {
+  const sportA = normalizeSportName(a);
+  const sportB = normalizeSportName(b);
+
+  const conflictsA = SPORT_CONFLICTS[sportA] || [];
+  const conflictsB = SPORT_CONFLICTS[sportB] || [];
+
+  return conflictsA.includes(sportB) || conflictsB.includes(sportA);
+}
+
+async function checkConflictingRegistrations(selectedSportName, taxCode) {
+  if (!selectedSportName || !taxCode) return [];
+
+  const { rows } = await pool.query(`
+    SELECT DISTINCT s.name AS sport_name
+    FROM registrations r
+    JOIN sports s ON s.id = r.sport_id
+    WHERE
+      LOWER(TRIM(COALESCE(r.player1_tax_code, ''))) = LOWER(TRIM($1))
+      OR LOWER(TRIM(COALESCE(r.player2_tax_code, ''))) = LOWER(TRIM($1))
+  `, [taxCode]);
+
+  return rows
+    .filter(row => sportsConflict(selectedSportName, row.sport_name))
+    .map(row => row.sport_name);
+}
 app.get('/ingresso', async (req, res, next) => {
   try {
     const settings = await getSettingsMap();
@@ -534,9 +577,38 @@ app.post('/iscrizioni', async (req, res, next) => {
     if (terms_images !== 'yes') errors.push('Devi accettare la pubblicazione delle immagini.');
     if (terms_liability !== 'yes') errors.push('Devi accettare la clausola di responsabilità.');
 
-    if (errors.length) {
-      return renderIscrizioniPage(req, res, 400, req.body, errors);
+// BLOCCO SPORT INCOMPATIBILI
+if (!errors.length && selectedSport) {
+
+  const conflictsPlayer1 = await checkConflictingRegistrations(
+    selectedSport.name,
+    player1_tax_code
+  );
+
+  if (conflictsPlayer1.length) {
+    errors.push(
+      `${player1_full_name} è già iscritto/a a ${conflictsPlayer1.join(', ')} e non può partecipare a ${selectedSport.name}.`
+    );
+  }
+
+  if (isPair && player2_tax_code) {
+
+    const conflictsPlayer2 = await checkConflictingRegistrations(
+      selectedSport.name,
+      player2_tax_code
+    );
+
+    if (conflictsPlayer2.length) {
+      errors.push(
+        `${player2_full_name} è già iscritto/a a ${conflictsPlayer2.join(', ')} e non può partecipare a ${selectedSport.name}.`
+      );
     }
+  }
+}
+
+if (errors.length) {
+  return renderIscrizioniPage(req, res, 400, req.body, errors);
+}
 
     await pool.query(
       `INSERT INTO registrations (
