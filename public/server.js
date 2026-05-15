@@ -683,15 +683,27 @@ app.post('/admin/settings/update', requireAuth, async (req, res, next) => {
   }
 });
 
-app.post('/admin/sponsors/create', requireAuth, upload.single('logo'), async (req, res, next) => {
+app.post('/admin/sponsors/create', requireAuth, upload.array('logos', 100), async (req, res, next) => {
   try {
-    if (!req.file) {
-      setFlash(req, 'error', 'Seleziona un logo sponsor.');
+    if (!req.files || !req.files.length) {
+      setFlash(req, 'error', 'Seleziona almeno un logo sponsor.');
       return res.redirect('/admin');
     }
-    const result = await uploadToCloudinary(req.file.buffer, { folder: 'palio/sponsors', resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'svg'] });
-    await pool.query('INSERT INTO sponsors (nome, logo_url) VALUES ($1, $2)', [req.body.nome || '', result.secure_url]);
-    setFlash(req, 'success', 'Sponsor caricato con successo.');
+
+    for (const file of req.files) {
+      const result = await uploadToCloudinary(file.buffer, {
+        folder: 'palio/sponsors',
+        resource_type: 'image',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'svg']
+      });
+
+      await pool.query(
+        'INSERT INTO sponsors (nome, logo_url) VALUES ($1, $2)',
+        ['', result.secure_url]
+      );
+    }
+
+    setFlash(req, 'success', `${req.files.length} sponsor caricati con successo.`);
     res.redirect('/admin');
   } catch (err) {
     next(err);
