@@ -843,21 +843,45 @@ app.post('/admin/settings/update', requireAuth, async (req, res, next) => {
   }
 });
 
-app.post('/admin/sponsors/create', requireAuth, upload.single('logo'), async (req, res, next) => {
+app.post('/admin/sponsors/create', requireAuth, upload.fields([
+  { name: 'logos', maxCount: 100 },
+  { name: 'logo', maxCount: 100 }
+]), async (req, res, next) => {
   try {
-    if (!req.file) {
-      setFlash(req, 'error', 'Seleziona un logo sponsor.');
+    const files = [
+      ...(req.files?.logos || []),
+      ...(req.files?.logo || [])
+    ];
+
+    if (!files.length) {
+      setFlash(req, 'error', 'Seleziona almeno un logo sponsor.');
       return res.redirect('/admin');
     }
-    const result = await uploadToCloudinary(req.file.buffer, { folder: 'palio/sponsors', resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'svg'] });
-    await pool.query('INSERT INTO sponsors (nome, logo_url) VALUES ($1, $2)', [req.body.nome || '', result.secure_url]);
-    setFlash(req, 'success', 'Sponsor caricato con successo.');
-    res.redirect('/admin');
+
+    let caricati = 0;
+
+    for (const file of files) {
+      const result = await uploadToCloudinary(file.buffer, {
+        folder: 'palio/sponsors',
+        resource_type: 'image'
+      });
+
+      await pool.query(
+        'INSERT INTO sponsors (nome, logo_url) VALUES ($1, $2)',
+        ['', result.secure_url]
+      );
+
+      caricati++;
+    }
+
+    setFlash(req, 'success', `${caricati} sponsor caricati con successo.`);
+    return res.redirect('/admin');
   } catch (err) {
-    next(err);
+    console.error('ERRORE CARICAMENTO SPONSOR:', err);
+    setFlash(req, 'error', 'Errore durante il caricamento sponsor.');
+    return res.redirect('/admin');
   }
 });
-
 app.post('/admin/sponsors/:id/delete', requireAuth, async (req, res, next) => {
   try {
     await pool.query('DELETE FROM sponsors WHERE id = $1', [req.params.id]);
@@ -877,6 +901,7 @@ function uploadToCloudinary(buffer, options) {
     stream.end(buffer);
   });
 }
+
 
 app.post('/admin/regolamenti/create', requireAuth, upload.single('pdf'), async (req, res, next) => {
   try {
