@@ -707,15 +707,13 @@ app.post('/admin/sponsors/create', requireAuth, upload.array('logos', 100), asyn
     }
 
     setFlash(req, 'success', `${caricati} sponsor caricati con successo.`);
-    return res.redirect('/admin');
-
+    res.redirect('/admin');
   } catch (err) {
     console.error('ERRORE CARICAMENTO SPONSOR:', err);
     setFlash(req, 'error', 'Errore durante il caricamento sponsor.');
-    return res.redirect('/admin');
+    res.redirect('/admin');
   }
 });
-
 app.post('/admin/sponsors/:id/delete', requireAuth, async (req, res, next) => {
   try {
     await pool.query('DELETE FROM sponsors WHERE id = $1', [req.params.id]);
