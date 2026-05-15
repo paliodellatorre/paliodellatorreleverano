@@ -46,12 +46,16 @@ const pool = new Pool({
 
 async function runSchema() {
   const schemaPath = path.join(__dirname, 'db', 'schema.sql');
-  if (fs.existsSync(schemaPath)) {
+if (fs.existsSync(schemaPath)) {
+  try {
     const schema = fs.readFileSync(schemaPath, 'utf8');
     await pool.query(schema);
-  } else {
-    console.warn('db/schema.sql non trovato, avvio senza esecuzione schema.');
+  } catch (err) {
+    console.warn('Schema SQL non eseguito, continuo avvio:', err.message);
   }
+} else {
+  console.warn('db/schema.sql non trovato, avvio senza esecuzione schema.');
+}
 
   await pool.query(`CREATE TABLE IF NOT EXISTS site_media (id SERIAL PRIMARY KEY, key TEXT UNIQUE NOT NULL, value TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
   await pool.query(`CREATE TABLE IF NOT EXISTS news (id SERIAL PRIMARY KEY, titolo TEXT, image_url TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
