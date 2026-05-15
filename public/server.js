@@ -690,23 +690,29 @@ app.post('/admin/sponsors/create', requireAuth, upload.array('logos', 100), asyn
       return res.redirect('/admin');
     }
 
+    let caricati = 0;
+
     for (const file of req.files) {
       const result = await uploadToCloudinary(file.buffer, {
         folder: 'palio/sponsors',
-        resource_type: 'image',
-        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'svg']
+        resource_type: 'image'
       });
 
       await pool.query(
         'INSERT INTO sponsors (nome, logo_url) VALUES ($1, $2)',
         ['', result.secure_url]
       );
+
+      caricati++;
     }
 
-    setFlash(req, 'success', `${req.files.length} sponsor caricati con successo.`);
-    res.redirect('/admin');
+    setFlash(req, 'success', `${caricati} sponsor caricati con successo.`);
+    return res.redirect('/admin');
+
   } catch (err) {
-    next(err);
+    console.error('ERRORE CARICAMENTO SPONSOR:', err);
+    setFlash(req, 'error', 'Errore durante il caricamento sponsor.');
+    return res.redirect('/admin');
   }
 });
 
