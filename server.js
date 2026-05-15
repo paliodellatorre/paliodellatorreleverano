@@ -265,11 +265,12 @@ function normalizeSportName(value) {
 }
 
 const SPORT_CONFLICTS = {
-  'burraco': ['ping pong', 'calcio 1vs1', 'volley', 'scopa'],
+  'burraco': ['ping pong', 'calcio 1vs1', 'volley', 'scopa', 'scacchi'],
   'scopa': ['ping pong', 'burraco', 'volley'],
   'ping pong': ['burraco', 'scopa'],
   'calcio 1vs1': ['burraco'],
-  'volley': ['burraco', 'scopa']
+  'volley': ['burraco', 'scopa'],
+  'scacchi': ['burraco']
 };
 
 function sportsConflict(a, b) {
