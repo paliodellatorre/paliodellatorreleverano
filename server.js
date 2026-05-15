@@ -354,12 +354,6 @@ app.get('/', async (req, res, next) => {
 
 app.get('/iscrizioni', async (req, res, next) => {
   try {
-    // Prima di compilare le iscrizioni sport, l'utente deve leggere il regolamento.
-    // Questo controllo vale solo per le iscrizioni sport, non per KIDS e non per il resto del sito.
-    if (req.query.ok !== '1') {
-      return res.redirect('/ingresso');
-    }
-
     return renderIscrizioniPage(req, res);
   } catch (err) {
     next(err);
