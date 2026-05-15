@@ -843,24 +843,16 @@ app.post('/admin/settings/update', requireAuth, async (req, res, next) => {
   }
 });
 
-app.post('/admin/sponsors/create', requireAuth, upload.fields([
-  { name: 'logos', maxCount: 100 },
-  { name: 'logo', maxCount: 100 }
-]), async (req, res, next) => {
+app.post('/admin/sponsors/create', requireAuth, upload.array('logo', 100), async (req, res, next) => {
   try {
-    const files = [
-      ...(req.files?.logos || []),
-      ...(req.files?.logo || [])
-    ];
-
-    if (!files.length) {
+    if (!req.files || !req.files.length) {
       setFlash(req, 'error', 'Seleziona almeno un logo sponsor.');
       return res.redirect('/admin');
     }
 
     let caricati = 0;
 
-    for (const file of files) {
+    for (const file of req.files) {
       const result = await uploadToCloudinary(file.buffer, {
         folder: 'palio/sponsors',
         resource_type: 'image'
