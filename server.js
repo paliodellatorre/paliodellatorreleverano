@@ -1454,7 +1454,17 @@ app.post('/admin/backup-now', requireAuth, async (req, res) => {
 
   res.redirect('/admin');
 });
+app.get('/admin/backup-now', requireAuth, async (req, res) => {
+  try {
+    await sendAutomaticBackupEmail('manuale');
+    setFlash(req, 'success', 'Backup inviato via email correttamente.');
+  } catch (err) {
+    console.error('ERRORE BACKUP MANUALE:', err);
+    setFlash(req, 'error', 'Errore durante il backup.');
+  }
 
+  res.redirect('/admin');
+});
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).send('Errore interno del server. Controlla la configurazione del database e delle variabili ambiente.');
