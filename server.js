@@ -9,6 +9,8 @@ const ExcelJS = require('exceljs');
 const fs = require('fs');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
+const cron = require('node-cron');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1215,6 +1217,243 @@ app.post('/api/pdt-jump/score', async (req, res, next) => {
   }
 });
 
+
+
+// ===============================
+// BACKUP AUTOMATICO VIA EMAIL
+// Ogni notte alle 00:05
+// ===============================
+
+async function createExcelBackupFile() {
+  const backupFolder = path.join(__dirname, 'backups');
+
+  if (!fs.existsSync(backupFolder)) {
+    fs.mkdirSync(backupFolder);
+  }
+
+  const now = new Date();
+  const dateForFile = now.toISOString().slice(0, 10);
+  const filePath = path.join(backupFolder, `backup-palio-${dateForFile}.xlsx`);
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Palio della Torre';
+  workbook.created = now;
+
+  async function addSheetFromQuery(sheetName, query, columns) {
+    const sheet = workbook.addWorksheet(sheetName.substring(0, 31));
+    sheet.columns = columns;
+    sheet.getRow(1).font = { bold: true };
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+    try {
+      const { rows } = await pool.query(query);
+
+      if (!rows.length) {
+        sheet.addRow({ info: 'Nessun dato presente' });
+        return;
+      }
+
+      rows.forEach(row => sheet.addRow(row));
+    } catch (err) {
+      sheet.addRow({ info: `Errore lettura tabella: ${err.message}` });
+    }
+  }
+
+  await addSheetFromQuery(
+    'Iscrizioni Sport',
+    `SELECT
+      r.id,
+      s.name AS sport,
+      r.rione,
+      r.player1_full_name,
+      r.player1_birth_date,
+      r.player1_tax_code,
+      r.player1_phone,
+      r.player1_rione_criteria,
+      r.player1_rione_address,
+      r.player1_shirt,
+      r.player1_shirt_size,
+      r.player2_full_name,
+      r.player2_birth_date,
+      r.player2_tax_code,
+      r.player2_phone,
+      r.player2_rione_criteria,
+      r.player2_rione_address,
+      r.player2_shirt,
+      r.player2_shirt_size,
+      r.email,
+      r.notes,
+      r.created_at
+     FROM registrations r
+     JOIN sports s ON s.id = r.sport_id
+     ORDER BY r.created_at DESC`,
+    [
+      { header: 'ID', key: 'id', width: 8 },
+      { header: 'SPORT', key: 'sport', width: 24 },
+      { header: 'RIONE', key: 'rione', width: 22 },
+      { header: 'NOME 1', key: 'player1_full_name', width: 28 },
+      { header: 'NASCITA 1', key: 'player1_birth_date', width: 18 },
+      { header: 'CF 1', key: 'player1_tax_code', width: 22 },
+      { header: 'TEL 1', key: 'player1_phone', width: 18 },
+      { header: 'CRITERIO 1', key: 'player1_rione_criteria', width: 22 },
+      { header: 'INDIRIZZO 1', key: 'player1_rione_address', width: 28 },
+      { header: 'MAGLIA 1', key: 'player1_shirt', width: 12 },
+      { header: 'TAGLIA 1', key: 'player1_shirt_size', width: 12 },
+      { header: 'NOME 2', key: 'player2_full_name', width: 28 },
+      { header: 'NASCITA 2', key: 'player2_birth_date', width: 18 },
+      { header: 'CF 2', key: 'player2_tax_code', width: 22 },
+      { header: 'TEL 2', key: 'player2_phone', width: 18 },
+      { header: 'CRITERIO 2', key: 'player2_rione_criteria', width: 22 },
+      { header: 'INDIRIZZO 2', key: 'player2_rione_address', width: 28 },
+      { header: 'MAGLIA 2', key: 'player2_shirt', width: 12 },
+      { header: 'TAGLIA 2', key: 'player2_shirt_size', width: 12 },
+      { header: 'EMAIL', key: 'email', width: 30 },
+      { header: 'NOTE', key: 'notes', width: 30 },
+      { header: 'CREATO IL', key: 'created_at', width: 24 },
+      { header: 'INFO', key: 'info', width: 40 }
+    ]
+  );
+
+  await addSheetFromQuery(
+    'Iscrizioni Kids',
+    `SELECT * FROM kids_registrations ORDER BY created_at DESC`,
+    [
+      { header: 'ID', key: 'id', width: 8 },
+      { header: 'BAMBINO', key: 'child_full_name', width: 28 },
+      { header: 'NASCITA', key: 'child_birth_date', width: 18 },
+      { header: 'CF BAMBINO', key: 'child_tax_code', width: 22 },
+      { header: 'GENITORE', key: 'parent_full_name', width: 28 },
+      { header: 'CF GENITORE', key: 'parent_tax_code', width: 22 },
+      { header: 'EMAIL', key: 'parent_email', width: 30 },
+      { header: 'TELEFONO', key: 'parent_phone', width: 18 },
+      { header: 'PRIVACY', key: 'privacy_consent', width: 12 },
+      { header: 'FOTO/VIDEO', key: 'media_consent', width: 14 },
+      { header: 'CREATO IL', key: 'created_at', width: 24 },
+      { header: 'INFO', key: 'info', width: 40 }
+    ]
+  );
+
+  await addSheetFromQuery(
+    'Sponsor',
+    `SELECT * FROM sponsors ORDER BY created_at DESC`,
+    [
+      { header: 'ID', key: 'id', width: 8 },
+      { header: 'NOME', key: 'nome', width: 28 },
+      { header: 'LOGO URL', key: 'logo_url', width: 70 },
+      { header: 'CREATO IL', key: 'created_at', width: 24 },
+      { header: 'INFO', key: 'info', width: 40 }
+    ]
+  );
+
+  await addSheetFromQuery(
+    'Novita',
+    `SELECT * FROM news ORDER BY created_at DESC`,
+    [
+      { header: 'ID', key: 'id', width: 8 },
+      { header: 'TITOLO', key: 'titolo', width: 30 },
+      { header: 'IMMAGINE URL', key: 'image_url', width: 70 },
+      { header: 'CREATO IL', key: 'created_at', width: 24 },
+      { header: 'INFO', key: 'info', width: 40 }
+    ]
+  );
+
+  await addSheetFromQuery(
+    'Regolamenti',
+    `SELECT * FROM regolamenti ORDER BY created_at DESC`,
+    [
+      { header: 'ID', key: 'id', width: 8 },
+      { header: 'TITOLO', key: 'titolo', width: 35 },
+      { header: 'FILE URL', key: 'file_url', width: 70 },
+      { header: 'CREATO IL', key: 'created_at', width: 24 },
+      { header: 'INFO', key: 'info', width: 40 }
+    ]
+  );
+
+  await addSheetFromQuery(
+    'Classifica Gioco',
+    `SELECT nickname, rione, score, coins, level_reached, created_at
+     FROM pdt_jump_scores
+     ORDER BY score DESC, coins DESC, created_at ASC`,
+    [
+      { header: 'NICKNAME', key: 'nickname', width: 24 },
+      { header: 'RIONE', key: 'rione', width: 22 },
+      { header: 'PUNTI', key: 'score', width: 12 },
+      { header: 'COIN', key: 'coins', width: 12 },
+      { header: 'LIVELLO', key: 'level_reached', width: 12 },
+      { header: 'CREATO IL', key: 'created_at', width: 24 },
+      { header: 'INFO', key: 'info', width: 40 }
+    ]
+  );
+
+  await addSheetFromQuery(
+    'Impostazioni',
+    `SELECT key, value, updated_at FROM site_settings ORDER BY key ASC`,
+    [
+      { header: 'CHIAVE', key: 'key', width: 35 },
+      { header: 'VALORE', key: 'value', width: 80 },
+      { header: 'AGGIORNATO IL', key: 'updated_at', width: 24 },
+      { header: 'INFO', key: 'info', width: 40 }
+    ]
+  );
+
+  await workbook.xlsx.writeFile(filePath);
+  return filePath;
+}
+
+async function sendAutomaticBackupEmail(reason = 'automatico') {
+  if (!process.env.BACKUP_EMAIL || !process.env.BACKUP_EMAIL_PASSWORD || !process.env.BACKUP_RECEIVER) {
+    console.warn('Backup email non configurato: controlla BACKUP_EMAIL, BACKUP_EMAIL_PASSWORD e BACKUP_RECEIVER.');
+    return;
+  }
+
+  const filePath = await createExcelBackupFile();
+  const fileName = path.basename(filePath);
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.BACKUP_EMAIL,
+      pass: process.env.BACKUP_EMAIL_PASSWORD
+    }
+  });
+
+  await transporter.sendMail({
+    from: process.env.BACKUP_EMAIL,
+    to: process.env.BACKUP_RECEIVER,
+    subject: `Backup Palio della Torre - ${new Date().toLocaleDateString('it-IT')}`,
+    text: `Backup ${reason} del sito Palio della Torre. In allegato trovi il file Excel con iscrizioni, Kids, sponsor, novità, regolamenti, classifica gioco e impostazioni.`,
+    attachments: [
+      {
+        filename: fileName,
+        path: filePath
+      }
+    ]
+  });
+
+  console.log(`Backup ${reason} inviato via email: ${fileName}`);
+}
+
+cron.schedule('5 0 * * *', async () => {
+  try {
+    await sendAutomaticBackupEmail('automatico notturno');
+  } catch (err) {
+    console.error('ERRORE BACKUP AUTOMATICO:', err);
+  }
+}, {
+  timezone: 'Europe/Rome'
+});
+
+app.post('/admin/backup-now', requireAuth, async (req, res) => {
+  try {
+    await sendAutomaticBackupEmail('manuale');
+    setFlash(req, 'success', 'Backup inviato via email correttamente.');
+  } catch (err) {
+    console.error('ERRORE BACKUP MANUALE:', err);
+    setFlash(req, 'error', 'Errore durante il backup. Controlla i log di Render.');
+  }
+
+  res.redirect('/admin');
+});
 
 app.use((err, req, res, next) => {
   console.error(err);
