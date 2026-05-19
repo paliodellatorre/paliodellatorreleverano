@@ -257,7 +257,7 @@ async function getMediaMap() {
 
 function isPairSport(name) {
   const n = String(name || '').toLowerCase();
-  return n.includes('coppia') || ['padel', 'burraco', 'scopa', 'biliardino'].some(k => n.includes(k));
+  return n.includes('coppia') || ['padel', 'burraco', 'scopa', 'bocce', 'biliardino'].some(k => n.includes(k));
 }
 
 function formatMaglia(value, size) {
