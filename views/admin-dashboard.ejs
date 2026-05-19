@@ -100,30 +100,244 @@
     <% } %>
 
     <details class="card admin-accordion">
-      <summary>
-        <span>Elenco iscrizioni sport</span>
-        <span class="accordion-arrow">▶</span>
-      </summary>
-      <div class="admin-accordion-content">
-        <div class="table-wrap">
-        <table>
-          <thead><tr><th>Nome</th><th>Rione</th><th>Sport</th><th>Contatti</th><th>Azioni</th></tr></thead>
-          <tbody>
-            <% if (!registrations.length) { %><tr><td colspan="5">Nessuna iscrizione sport presente.</td></tr><% } %>
-            <% registrations.forEach(function(item){ %>
-              <tr>
-                <td><strong><%= item.full_name %></strong><br><span class="small">Creato il <%= new Date(item.created_at).toLocaleString('it-IT') %></span><% if (item.notes) { %><br><span class="small"><%= item.notes %></span><% } %></td>
-                <td><%= item.rione %></td>
-                <td><%= item.sport_name %><br><span class="small">€<%= Number(item.sport_price).toFixed(2) %></span></td>
-                <td><%= item.phone %><br><span class="small"><%= item.email %></span></td>
-                <td><div class="actions"><a class="button button-green" href="/admin/registrations/<%= item.id %>/edit" style="padding:10px 14px">Modifica</a><form class="inline-form" method="post" action="/admin/registrations/<%= item.id %>/delete" onsubmit="return confirm('Eliminare questa iscrizione?')"><button class="button" style="background:#fee2e2;color:#991b1b;padding:10px 14px">Elimina</button></form></div></td>
+  <summary>
+    <span>Elenco iscrizioni sport</span>
+    <span class="accordion-arrow">▶</span>
+  </summary>
+
+  <div class="admin-accordion-content">
+
+    <div style="margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+
+      <label style="font-weight:700;color:var(--green)">
+        Filtra per sport
+      </label>
+
+      <select id="sportFilter" style="max-width:280px">
+        <option value="">Tutti gli sport</option>
+
+        <% 
+          const uniqueSports = [...new Set(
+            registrations.map(r => r.sport_name).filter(Boolean)
+          )].sort((a,b)=>a.localeCompare(b,'it'));
+        %>
+
+        <% uniqueSports.forEach(function(sport){ %>
+          <option value="<%= sport %>"><%= sport %></option>
+        <% }) %>
+
+      </select>
+
+    </div>
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Rione</th>
+            <th>Sport</th>
+            <th>Contatti</th>
+            <th>Azioni</th>
+          </tr>
+        </thead>
+
+        <tbody id="registrationsTable">
+
+          <% if (!registrations.length) { %>
+
+            <tr>
+              <td colspan="5">
+                Nessuna iscrizione sport presente.
+              </td>
+            </tr>
+
+          <% } %>
+
+          <% registrations
+              .sort((a,b)=>
+                String(a.sport_name||'').localeCompare(
+                  String(b.sport_name||''),
+                  'it'
+                )
+              )
+              .forEach(function(item){ %>
+
+            <tr data-sport="<%= item.sport_name %>">
+
+              <td>
+                <strong>
+                  <%= item.player1_full_name || item.full_name %>
+                </strong>
+
+                <br>
+
+                <span class="small">
+                  1° giocatore
+                </span>
+
+                <br>
+
+                <span class="small">
+                  Creato il
+                  <%= new Date(item.created_at).toLocaleString('it-IT') %>
+                </span>
+
+                <% if (item.notes) { %>
+                  <br>
+                  <span class="small">
+                    <%= item.notes %>
+                  </span>
+                <% } %>
+              </td>
+
+              <td>
+                <%= item.rione %>
+              </td>
+
+              <td>
+                <%= item.sport_name %>
+
+                <br>
+
+                <span class="small">
+                  €<%= Number(item.sport_price).toFixed(2) %>
+                </span>
+              </td>
+
+              <td>
+                <%= item.player1_phone || item.phone %>
+
+                <br>
+
+                <span class="small">
+                  <%= item.email %>
+                </span>
+              </td>
+
+              <td>
+
+                <div class="actions">
+
+                  <a
+                    class="button button-green"
+                    href="/admin/registrations/<%= item.id %>/edit"
+                    style="padding:10px 14px"
+                  >
+                    Modifica
+                  </a>
+
+                  <form
+                    class="inline-form"
+                    method="post"
+                    action="/admin/registrations/<%= item.id %>/delete"
+                    onsubmit="return confirm('Eliminare questa iscrizione?')"
+                  >
+
+                    <button
+                      class="button"
+                      style="background:#fee2e2;color:#991b1b;padding:10px 14px"
+                    >
+                      Elimina
+                    </button>
+
+                  </form>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+            <% if (item.player2_full_name) { %>
+
+              <tr
+                data-sport="<%= item.sport_name %>"
+                style="background:#f9fafb"
+              >
+
+                <td>
+                  <strong>
+                    <%= item.player2_full_name %>
+                  </strong>
+
+                  <br>
+
+                  <span class="small">
+                    2° giocatore
+                  </span>
+                </td>
+
+                <td>
+                  <%= item.rione %>
+                </td>
+
+                <td>
+                  <%= item.sport_name %>
+
+                  <br>
+
+                  <span class="small">
+                    €<%= Number(item.sport_price).toFixed(2) %>
+                  </span>
+                </td>
+
+                <td>
+                  <%= item.player2_phone || '' %>
+
+                  <br>
+
+                  <span class="small">
+                    <%= item.email %>
+                  </span>
+                </td>
+
+                <td></td>
+
               </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-      </div>
-    </details>
+
+            <% } %>
+
+          <% }) %>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+</details>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+
+  const filter = document.getElementById('sportFilter');
+
+  if(!filter) return;
+
+  filter.addEventListener('change', function(){
+
+    const value = this.value.toLowerCase();
+
+    document.querySelectorAll('#registrationsTable tr').forEach(row => {
+
+      const sport = (row.dataset.sport || '').toLowerCase();
+
+      if(!value || sport === value){
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+
+    });
+
+  });
+
+});
+</script>
 
     <details class="card admin-accordion">
       <summary>
